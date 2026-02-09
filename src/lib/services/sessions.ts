@@ -86,3 +86,35 @@ export async function postRecap(
     updatedAt: serverTimestamp(),
   });
 }
+
+import { addDoc } from "firebase/firestore";
+
+export async function createSession(
+  studyId: string,
+  payload: {
+    scheduledAt: Date | null;
+    passageRef: string;
+    questions: string[];
+  }
+) {
+  const ref = await addDoc(
+    collection(getFirebaseDb(), "studies", studyId, "sessions"),
+    {
+      order: Date.now(), // simple ordering for now
+      scheduledAt: payload.scheduledAt
+        ? Timestamp.fromDate(payload.scheduledAt)
+        : null,
+      passage: {
+        reference: payload.passageRef,
+      },
+      agenda: {
+        questions: payload.questions,
+        leaderNotes: "",
+      },
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    }
+  );
+
+  return ref.id;
+}

@@ -146,3 +146,16 @@ export async function getNextSession(
     order: data.order ?? 0,
   };
 }
+
+export async function getMyRole(
+  studyId: string,
+  uid: string
+): Promise<"leader" | "participant" | null> {
+  const snap = await getDoc(
+    doc(getFirebaseDb(), "studies", studyId, "members", uid)
+  );
+
+  if (!snap.exists()) return null;
+
+  return snap.data().role ?? null;
+};
