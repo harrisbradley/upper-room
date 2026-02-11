@@ -3,12 +3,11 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
-import { getStudy } from "@/lib/services/studies";
 import { listSessions, SessionDoc } from "@/lib/services/sessions";
 import { Button } from "@/components/ui/Button";
 import { Card, CardTitle } from "@/components/ui/Card";
 import { ensureAnonymousAuth } from "@/lib/firebase/auth";
-import { getMyRole } from "@/lib/services/studies";
+import { getMyRole, getStudy, type Study } from "@/lib/services/studies";
 
 type DateLike = {
   toDate?: () => Date;
@@ -33,7 +32,7 @@ export default function StudyDashboard() {
   const params = useParams<{ studyId: string }>();
   const studyId = params.studyId;
 
-  const [study, setStudy] = useState<any>(null);
+  const [study, setStudy] = useState<Study | null>(null);
   const [sessions, setSessions] = useState<SessionDoc[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -63,8 +62,10 @@ export default function StudyDashboard() {
         setRole(r);
         setStudy(s);
         setSessions(sess);
-      } catch (e: any) {
-        setError(e?.message ?? "Could not load this study.");
+      } catch (e: unknown) {
+        setError(
+          e instanceof Error ? e.message : "Could not load this study."
+        );
       } finally {
         setLoading(false);
       }

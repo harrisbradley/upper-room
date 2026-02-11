@@ -39,8 +39,10 @@ export default function RecapPage() {
         setSummary(s.recap?.summary ?? "");
         setTakeawaysText((s.recap?.keyTakeaways ?? []).join("\n"));
         setIntentionsText((s.recap?.prayerIntentions ?? []).join("\n"));
-      } catch (e: any) {
-        setLoadError(e?.message ?? "Could not load recap.");
+      } catch (e: unknown) {
+        setLoadError(
+          e instanceof Error ? e.message : "Could not load recap."
+        );
       } finally {
         setLoading(false);
       }
@@ -72,8 +74,8 @@ export default function RecapPage() {
         prayerIntentions,
       });
       setPosted(true);
-    } catch (e: any) {
-      setError(e?.message ?? "Could not post recap.");
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Could not post recap.");
     } finally {
       setPosting(false);
     }

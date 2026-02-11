@@ -6,7 +6,6 @@ import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { Card, CardTitle } from "@/components/ui/Card";
 import { getStudyByJoinCode } from "@/lib/services/join";
-import { getNextSession } from "@/lib/services/studies";
 import type { Study } from "@/lib/services/studies";
 import type { Session } from "@/lib/services/studies";
 

@@ -3,7 +3,6 @@ import {
   onAuthStateChanged,
   type User,
   type Unsubscribe,
-  linkWithCredential,
   type UserCredential,
 } from "firebase/auth";
 import { getFirebaseAuth } from "./client";
@@ -36,9 +35,7 @@ export async function ensureAnonymousAuth(): Promise<User> {
  * Placeholder: link anonymous account to a permanent provider (e.g. email/password or Google).
  * Use linkWithCredential or linkWithPopup after the user chooses to upgrade their account.
  */
-export async function linkAnonymousToProvider(
-  _credential?: unknown
-): Promise<UserCredential> {
+export async function linkAnonymousToProvider(): Promise<UserCredential> {
   const auth = getFirebaseAuth();
   const user = auth.currentUser;
   if (!user || !user.isAnonymous) {
@@ -46,16 +43,14 @@ export async function linkAnonymousToProvider(
   }
   // When implementing: import EmailAuthProvider or use linkWithPopup with GoogleAuthProvider
   // return linkWithCredential(auth, user, credential);
-  throw new Error("Provider linking not implemented. Pass a credential and use linkWithCredential.");
+  throw new Error("Provider linking not implemented.");
 }
 
 /**
  * Placeholder: sign in with a permanent provider (e.g. Google). For existing anonymous users,
  * consider linking instead so study membership is preserved.
  */
-export async function signInWithProvider(
-  _providerName: "google" | "email"
-): Promise<User> {
+export async function signInWithProvider(): Promise<User> {
   // When implementing: signInWithPopup(auth, new GoogleAuthProvider()) or signInWithEmailAndPassword
   throw new Error("Provider sign-in not implemented.");
 }

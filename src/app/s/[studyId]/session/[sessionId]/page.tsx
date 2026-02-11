@@ -38,8 +38,10 @@ export default function SessionEditPage() {
         setPassageRef(s.passage?.reference ?? "");
         setQuestionsText((s.agenda?.questions ?? []).join("\n"));
         setLeaderNotes(s.agenda?.leaderNotes ?? "");
-      } catch (e: any) {
-        setLoadError(e?.message ?? "Could not load session.");
+      } catch (e: unknown) {
+        setLoadError(
+          e instanceof Error ? e.message : "Could not load session."
+        );
       } finally {
         setLoading(false);
       }
@@ -64,8 +66,8 @@ export default function SessionEditPage() {
         leaderNotes,
       });
       setSaved(true);
-    } catch (e: any) {
-      setError(e?.message ?? "Could not save.");
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Could not save.");
     } finally {
       setSaving(false);
     }

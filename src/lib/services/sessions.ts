@@ -32,9 +32,11 @@ export type SessionDoc = {
   };
 };
 
+type SessionDocData = Omit<SessionDoc, "id"> & Record<string, unknown>;
+
 function normalizeSessionDoc(
   id: string,
-  data: Record<string, any>
+  data: SessionDocData
 ): SessionDoc {
   return {
     id,
@@ -50,7 +52,9 @@ export async function listSessions(studyId: string): Promise<SessionDoc[]> {
     orderBy("order", "asc")
   );
   const snap = await getDocs(q);
-  return snap.docs.map((d) => normalizeSessionDoc(d.id, d.data() as Record<string, any>));
+  return snap.docs.map((d) =>
+    normalizeSessionDoc(d.id, d.data() as SessionDocData)
+  );
 }
 
 export async function getSession(
@@ -61,7 +65,7 @@ export async function getSession(
     doc(getFirebaseDb(), "studies", studyId, "sessions", sessionId)
   );
   if (!snap.exists()) return null;
-  return normalizeSessionDoc(snap.id, snap.data() as Record<string, any>);
+  return normalizeSessionDoc(snap.id, snap.data() as SessionDocData);
 }
 
 export async function updateSessionBasics(

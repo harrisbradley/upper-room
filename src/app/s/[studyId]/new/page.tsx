@@ -40,8 +40,10 @@ export default function NewSessionPage() {
       });
 
       router.push(`/s/${studyId}`);
-    } catch (e: any) {
-      setError(e?.message ?? "Could not create session.");
+    } catch (e: unknown) {
+      setError(
+        e instanceof Error ? e.message : "Could not create session."
+      );
     } finally {
       setSaving(false);
     }
