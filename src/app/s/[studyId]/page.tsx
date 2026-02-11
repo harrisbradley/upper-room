@@ -15,8 +15,7 @@ type DateLike = {
 } | null;
 
 function getSessionDate(session: SessionDoc): DateLike {
-  const scheduledAt = (session as SessionDoc & { scheduledAt?: DateLike }).scheduledAt;
-  return scheduledAt ?? session.startsAt ?? null;
+  return session.scheduledAt ?? session.startsAt ?? null;
 }
 
 function fmt(ts: DateLike) {
@@ -122,7 +121,7 @@ export default function StudyDashboard() {
     <main className="mx-auto min-h-screen w-full max-w-3xl px-4 py-10">
       <header>
         <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
-          {study.name || study.title || "Study"}
+          {study.name || "Study"}
         </h1>
         <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
           Plan weekly sessions and keep everyone aligned.

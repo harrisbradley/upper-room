@@ -2,20 +2,24 @@
 
 import { getFirebaseDb } from "@/lib/firebase/client";
 import {
+  Timestamp,
+  addDoc,
   collection,
   doc,
   getDoc,
   getDocs,
   orderBy,
   query,
-  updateDoc,
   serverTimestamp,
-  Timestamp,
+  updateDoc,
 } from "firebase/firestore";
 
 export type SessionDoc = {
   id: string;
-  startsAt?: Timestamp;
+  // Canonical field for scheduled datetime.
+  scheduledAt?: Timestamp | null;
+  // Legacy field kept for backward compatibility in older documents.
+  startsAt?: Timestamp | null;
   title?: string;
   passage?: { reference?: string };
   agenda?: { questions?: string[]; leaderNotes?: string };
@@ -28,13 +32,25 @@ export type SessionDoc = {
   };
 };
 
+function normalizeSessionDoc(
+  id: string,
+  data: Record<string, any>
+): SessionDoc {
+  return {
+    id,
+    ...data,
+    scheduledAt: data.scheduledAt ?? data.startsAt ?? null,
+    startsAt: data.startsAt ?? null,
+  };
+}
+
 export async function listSessions(studyId: string): Promise<SessionDoc[]> {
   const q = query(
     collection(getFirebaseDb(), "studies", studyId, "sessions"),
     orderBy("order", "asc")
   );
   const snap = await getDocs(q);
-  return snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) }));
+  return snap.docs.map((d) => normalizeSessionDoc(d.id, d.data() as Record<string, any>));
 }
 
 export async function getSession(
@@ -45,7 +61,7 @@ export async function getSession(
     doc(getFirebaseDb(), "studies", studyId, "sessions", sessionId)
   );
   if (!snap.exists()) return null;
-  return { id: snap.id, ...(snap.data() as any) };
+  return normalizeSessionDoc(snap.id, snap.data() as Record<string, any>);
 }
 
 export async function updateSessionBasics(
@@ -86,8 +102,6 @@ export async function postRecap(
     updatedAt: serverTimestamp(),
   });
 }
-
-import { addDoc } from "firebase/firestore";
 
 export async function createSession(
   studyId: string,

@@ -39,7 +39,7 @@ export async function joinStudy(studyId: string): Promise<void> {
   const snap = await getDoc(memberRef);
   if (snap.exists()) return;
   await setDoc(memberRef, {
-    role: "member",
+    role: "participant",
     joinedAt: serverTimestamp(),
   });
 }

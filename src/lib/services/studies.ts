@@ -157,5 +157,11 @@ export async function getMyRole(
 
   if (!snap.exists()) return null;
 
-  return snap.data().role ?? null;
-};
+  const role = snap.data().role;
+  if (role === "leader") return "leader";
+
+  // Backward compatibility for older documents created with role: "member".
+  if (role === "participant" || role === "member") return "participant";
+
+  return null;
+}
