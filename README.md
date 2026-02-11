@@ -29,6 +29,23 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000).
 
+## Troubleshooting
+
+### `Firebase: Error (auth/invalid-api-key)`
+
+This usually means the Firebase web config is missing or incorrect in `.env.local`.
+
+1. Open Firebase Console → **Project settings** → **Your apps** → your **Web app**.
+2. Copy values into `.env.local` for:
+   - `NEXT_PUBLIC_FIREBASE_API_KEY`
+   - `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN`
+   - `NEXT_PUBLIC_FIREBASE_PROJECT_ID`
+   - `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET`
+   - `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID`
+   - `NEXT_PUBLIC_FIREBASE_APP_ID`
+3. Make sure values are not placeholders like `your_api_key_here`.
+4. Restart the dev server after env changes (`Ctrl+C`, then `npm run dev`).
+
 ## Routes
 
 - **/** — Landing; CTA to create a study.
