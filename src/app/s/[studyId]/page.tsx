@@ -6,12 +6,21 @@ import { useParams } from "next/navigation";
 import { getStudy } from "@/lib/services/studies";
 import { listSessions, SessionDoc } from "@/lib/services/sessions";
 import { Button } from "@/components/ui/Button";
+import { Card, CardTitle } from "@/components/ui/Card";
 import { ensureAnonymousAuth } from "@/lib/firebase/auth";
 import { getMyRole } from "@/lib/services/studies";
 
+type DateLike = {
+  toDate?: () => Date;
+} | null;
 
-function fmt(ts?: any) {
-  if (!ts?.toDate) return "";
+function getSessionDate(session: SessionDoc): DateLike {
+  const scheduledAt = (session as SessionDoc & { scheduledAt?: DateLike }).scheduledAt;
+  return scheduledAt ?? session.startsAt ?? null;
+}
+
+function fmt(ts: DateLike) {
+  if (!ts?.toDate) return "Not scheduled";
   return ts.toDate().toLocaleString([], {
     weekday: "short",
     month: "short",
@@ -28,109 +37,189 @@ export default function StudyDashboard() {
   const [study, setStudy] = useState<any>(null);
   const [sessions, setSessions] = useState<SessionDoc[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [role, setRole] = useState<"leader" | "participant" | null>(null);
 
   const nextSession = useMemo(() => {
     const now = new Date();
     return (
       sessions.find((s) => {
-        const d = s.startsAt?.toDate?.();
+        const d = getSessionDate(s)?.toDate?.();
         return d ? d >= now : false;
-      }) ?? sessions[0]
+      }) ?? sessions[0] ?? null
     );
   }, [sessions]);
 
   useEffect(() => {
     (async () => {
       setLoading(true);
+      setError(null);
 
-      const user = await ensureAnonymousAuth();
-      const r = await getMyRole(studyId, user.uid);
+      try {
+        const user = await ensureAnonymousAuth();
+        const r = await getMyRole(studyId, user.uid);
+        const s = await getStudy(studyId);
+        const sess = await listSessions(studyId);
 
-      const s = await getStudy(studyId);
-      const sess = await listSessions(studyId);
-
-      setRole(r);
-      setStudy(s);
-      setSessions(sess);
-      setLoading(false);
+        setRole(r);
+        setStudy(s);
+        setSessions(sess);
+      } catch (e: any) {
+        setError(e?.message ?? "Could not load this study.");
+      } finally {
+        setLoading(false);
+      }
     })();
   }, [studyId]);
 
+  if (loading) {
+    return (
+      <main className="flex min-h-screen items-center justify-center px-4">
+        <p className="text-slate-500 dark:text-slate-400">Loading...</p>
+      </main>
+    );
+  }
 
-  if (loading) return <main>Loading...</main>;
-  if (!study) return <main>Study not found.</main>;
+  if (error) {
+    return (
+      <main className="flex min-h-screen items-center justify-center px-4">
+        <Card className="w-full max-w-md">
+          <CardTitle className="mb-2">Could not load study</CardTitle>
+          <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+          <div className="mt-5">
+            <Link href="/">
+              <Button variant="outline" className="w-full">
+                Back home
+              </Button>
+            </Link>
+          </div>
+        </Card>
+      </main>
+    );
+  }
+
+  if (!study) {
+    return (
+      <main className="flex min-h-screen items-center justify-center px-4">
+        <Card className="w-full max-w-md">
+          <CardTitle className="mb-2">Study not found</CardTitle>
+          <p className="text-sm text-slate-600 dark:text-slate-400">
+            This study may have been removed or your invite link is invalid.
+          </p>
+          <div className="mt-5">
+            <Link href="/">
+              <Button variant="outline" className="w-full">
+                Back home
+              </Button>
+            </Link>
+          </div>
+        </Card>
+      </main>
+    );
+  }
 
   return (
-    <main style={{ maxWidth: 760 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 12 }}>
-        <h1 style={{ fontSize: 34, margin: 0 }}>{study.title}</h1>
+    <main className="mx-auto min-h-screen w-full max-w-3xl px-4 py-10">
+      <header>
+        <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
+          {study.name || study.title || "Study"}
+        </h1>
+        <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+          Plan weekly sessions and keep everyone aligned.
+        </p>
+      </header>
+
+      <div className="mt-4 flex flex-wrap gap-3">
         {role === "leader" && (
           <Link href={`/s/${studyId}/new`}>
             <Button>Create new session</Button>
           </Link>
         )}
-        <Link href={`/created/${studyId}`} style={{ color: "#444" }}>
-          Share link
+        <Link href={`/created/${studyId}`}>
+          <Button variant="outline">Share invite link</Button>
         </Link>
       </div>
 
       {nextSession && (
-        <div style={{ marginTop: 12, padding: 14, border: "1px solid #ddd", borderRadius: 14 }}>
-          <div style={{ fontWeight: 800, marginBottom: 6 }}>Next session</div>
-          <div style={{ color: "#444" }}>{fmt(nextSession.startsAt)}</div>
+        <Card className="mt-6">
+          <CardTitle className="text-lg">Next session</CardTitle>
+          <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
+            {fmt(getSessionDate(nextSession))}
+          </p>
+          <p className="mt-2 text-base font-medium text-slate-800 dark:text-slate-200">
+            {nextSession.passage?.reference || nextSession.title || "Session"}
+          </p>
 
           {role === "leader" && (
-            <div style={{ marginTop: 10, display: "flex", gap: 10, flexWrap: "wrap" }}>
+            <div className="mt-4 flex flex-wrap gap-2">
               <Link href={`/s/${studyId}/session/${nextSession.id}`}>
-                <Button>Edit session</Button>
+                <Button size="sm">Edit session</Button>
               </Link>
 
               <Link href={`/s/${studyId}/session/${nextSession.id}/recap`}>
-                <Button variant="secondary">Post recap</Button>
+                <Button variant="secondary" size="sm">
+                  Post recap
+                </Button>
               </Link>
             </div>
           )}
-        </div>
+        </Card>
       )}
 
-      <h2 style={{ marginTop: 22, marginBottom: 10 }}>Sessions</h2>
+      <section className="mt-8">
+        <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">
+          Sessions
+        </h2>
 
-      {sessions.length === 0 ? (
-        <div style={{ color: "#444" }}>No sessions yet.</div>
-      ) : (
-        <div style={{ display: "grid", gap: 10 }}>
-          {sessions.map((sess) => (
-            <div key={sess.id} style={{ border: "1px solid #ddd", borderRadius: 14, padding: 14 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "baseline" }}>
-                <div>
-                  <div style={{ fontWeight: 800 }}>
-                    {sess.passage?.reference || sess.title || "Session"}
+        {sessions.length === 0 ? (
+          <Card className="mt-4">
+            <p className="text-sm text-slate-600 dark:text-slate-400">
+              No sessions yet.
+            </p>
+          </Card>
+        ) : (
+          <div className="mt-4 grid gap-3">
+            {sessions.map((sess) => (
+              <Card key={sess.id}>
+                <div className="flex flex-wrap items-start justify-between gap-4">
+                  <div>
+                    <p className="text-base font-semibold text-slate-900 dark:text-slate-100">
+                      {sess.passage?.reference || sess.title || "Session"}
+                    </p>
+                    <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+                      {fmt(getSessionDate(sess))}
+                    </p>
                   </div>
-                  <div style={{ color: "#444", marginTop: 2 }}>{fmt(sess.startsAt)}</div>
+
+                  {role === "leader" && (
+                    <div className="flex flex-wrap gap-2">
+                      <Link href={`/s/${studyId}/session/${sess.id}`}>
+                        <Button size="sm">Edit</Button>
+                      </Link>
+                      <Link href={`/s/${studyId}/session/${sess.id}/recap`}>
+                        <Button variant="secondary" size="sm">
+                          Recap
+                        </Button>
+                      </Link>
+                    </div>
+                  )}
                 </div>
 
-                {role === "leader" && (
-                  <div style={{ display: "flex", gap: 10 }}>
-                    <Link href={`/s/${studyId}/session/${sess.id}`}>Edit</Link>
-                    <Link href={`/s/${studyId}/session/${sess.id}/recap`}>Recap</Link>
-                  </div>
+                {sess.recap?.summary ? (
+                  <p className="mt-4 text-sm text-slate-700 dark:text-slate-300">
+                    <strong>Recap:</strong> {sess.recap.summary.slice(0, 140)}
+                    {sess.recap.summary.length > 140 ? "…" : ""}
+                  </p>
+                ) : (
+                  <p className="mt-4 text-sm text-slate-500 dark:text-slate-400">
+                    No recap yet.
+                  </p>
                 )}
-              </div>
-
-              {sess.recap?.summary ? (
-                <div style={{ marginTop: 10, color: "#444" }}>
-                  <strong>Recap:</strong>{" "}
-                  {sess.recap.summary.slice(0, 120)}
-                  {sess.recap.summary.length > 120 ? "…" : ""}
-                </div>
-              ) : (
-                <div style={{ marginTop: 10, color: "#666" }}>No recap yet.</div>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
+              </Card>
+            ))}
+          </div>
+        )}
+      </section>
     </main>
   );
 }

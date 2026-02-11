@@ -4,6 +4,9 @@ import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { createSession } from "@/lib/services/sessions";
 import { Button } from "@/components/ui/Button";
+import { Card, CardTitle } from "@/components/ui/Card";
+import { Input } from "@/components/ui/Input";
+import { Textarea } from "@/components/ui/Textarea";
 import Link from "next/link";
 
 export default function NewSessionPage() {
@@ -17,7 +20,8 @@ export default function NewSessionPage() {
   const [passage, setPassage] = useState("");
   const [questionsText, setQuestionsText] = useState("");
 
-  async function onCreate() {
+  async function onCreate(e: React.FormEvent) {
+    e.preventDefault();
     setSaving(true);
     setError(null);
 
@@ -44,38 +48,66 @@ export default function NewSessionPage() {
   }
 
   return (
-    <main style={{ maxWidth: 760 }}>
-      <div style={{ display: "flex", justifyContent: "space-between" }}>
-        <h1>New Session</h1>
-        <Link href={`/s/${studyId}`}>Back</Link>
+    <main className="mx-auto min-h-screen w-full max-w-3xl px-4 py-10">
+      <div className="mb-5 flex items-center justify-between gap-3">
+        <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
+          New session
+        </h1>
+        <Link href={`/s/${studyId}`}>
+          <Button variant="outline">Back</Button>
+        </Link>
       </div>
 
-      <div style={{ marginTop: 20, display: "grid", gap: 12 }}>
-        <input
-          type="datetime-local"
-          value={date}
-          onChange={(e) => setDate(e.target.value)}
-        />
+      <Card>
+        <CardTitle>Create session details</CardTitle>
+        <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
+          Add a time, passage, and discussion prompts for your group.
+        </p>
 
-        <input
-          placeholder="Scripture passage (e.g., John 3)"
-          value={passage}
-          onChange={(e) => setPassage(e.target.value)}
-        />
+        <form onSubmit={onCreate} className="mt-5 grid gap-4">
+          <Input
+            label="Date and time"
+            type="datetime-local"
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+            disabled={saving}
+          />
 
-        <textarea
-          placeholder="Starter questions (one per line)"
-          value={questionsText}
-          onChange={(e) => setQuestionsText(e.target.value)}
-          style={{ minHeight: 120, padding: 12 }}
-        />
+          <Input
+            label="Scripture passage"
+            placeholder="e.g. John 3:16-21"
+            value={passage}
+            onChange={(e) => setPassage(e.target.value)}
+            disabled={saving}
+          />
 
-        {error && <div style={{ color: "red" }}>{error}</div>}
+          <Textarea
+            label="Starter questions (one per line)"
+            placeholder={"What stands out to you?\nWhat do we learn about God?\nHow can we apply this this week?"}
+            value={questionsText}
+            onChange={(e) => setQuestionsText(e.target.value)}
+            rows={6}
+            disabled={saving}
+          />
 
-        <Button onClick={onCreate} disabled={saving}>
-          {saving ? "Creating..." : "Create session"}
-        </Button>
-      </div>
+          {error && (
+            <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900/40 dark:bg-red-950/30 dark:text-red-300">
+              {error}
+            </p>
+          )}
+
+          <div className="flex flex-wrap gap-2">
+            <Button type="submit" disabled={saving}>
+              {saving ? "Creating..." : "Create session"}
+            </Button>
+            <Link href={`/s/${studyId}`}>
+              <Button type="button" variant="secondary" disabled={saving}>
+                Cancel
+              </Button>
+            </Link>
+          </div>
+        </form>
+      </Card>
     </main>
   );
 }
