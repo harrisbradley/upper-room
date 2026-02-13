@@ -8,7 +8,8 @@ import { listSessions, SessionDoc } from "@/lib/services/sessions";
 import { Button } from "@/components/ui/Button";
 import { ensureAnonymousAuth } from "@/lib/firebase/auth";
 import { getMyRole } from "@/lib/services/studies";
-
+import { PageLoading } from "@/components/ui/LoadingSpinner";
+import { PageError } from "@/components/ui/ErrorMessage";
 
 function fmt(ts?: any) {
   if (!ts?.toDate) return "";
@@ -57,75 +58,141 @@ export default function StudyDashboard() {
     })();
   }, [studyId]);
 
+  if (loading) return <PageLoading />;
+  if (!study) return <PageError message="Study not found." />;
 
-  if (loading) return <main>Loading...</main>;
-  if (!study) return <main>Study not found.</main>;
+  const isLeader = role === "leader";
 
   return (
-    <main style={{ maxWidth: 760 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 12 }}>
-        <h1 style={{ fontSize: 34, margin: 0 }}>{study.title}</h1>
-        {role === "leader" && (
-          <Link href={`/s/${studyId}/new`}>
-            <Button>Create new session</Button>
+    <main className="mx-auto max-w-3xl px-4 py-8">
+      {/* Header */}
+      <div className="flex flex-wrap items-baseline justify-between gap-3">
+        <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100">
+          {study.name}
+        </h1>
+        <div className="flex items-center gap-3">
+          {isLeader && (
+            <Link href={`/s/${studyId}/new`}>
+              <Button size="sm">New session</Button>
+            </Link>
+          )}
+          <Link
+            href={`/created/${studyId}`}
+            className="text-sm text-slate-500 hover:text-[var(--accent)] dark:text-slate-400"
+          >
+            Share link
           </Link>
-        )}
-        <Link href={`/created/${studyId}`} style={{ color: "#444" }}>
-          Share link
-        </Link>
+        </div>
       </div>
 
+      {/* Next session card */}
       {nextSession && (
-        <div style={{ marginTop: 12, padding: 14, border: "1px solid #ddd", borderRadius: 14 }}>
-          <div style={{ fontWeight: 800, marginBottom: 6 }}>Next session</div>
-          <div style={{ color: "#444" }}>{fmt(nextSession.startsAt)}</div>
+        <div className="mt-5 rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-800">
+          <div className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+            Next session
+          </div>
+          <div className="mt-1 font-medium text-slate-900 dark:text-slate-100">
+            {nextSession.passage?.reference || nextSession.title || "Session"}
+          </div>
+          <div className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
+            {fmt(nextSession.startsAt)}
+          </div>
 
-          {role === "leader" && (
-            <div style={{ marginTop: 10, display: "flex", gap: 10, flexWrap: "wrap" }}>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {isLeader ? (
+              <>
+                <Link href={`/s/${studyId}/session/${nextSession.id}`}>
+                  <Button size="sm">Edit session</Button>
+                </Link>
+                <Link href={`/s/${studyId}/session/${nextSession.id}/recap`}>
+                  <Button variant="secondary" size="sm">
+                    Post recap
+                  </Button>
+                </Link>
+              </>
+            ) : (
               <Link href={`/s/${studyId}/session/${nextSession.id}`}>
-                <Button>Edit session</Button>
+                <Button variant="outline" size="sm">
+                  View session
+                </Button>
               </Link>
-
-              <Link href={`/s/${studyId}/session/${nextSession.id}/recap`}>
-                <Button variant="secondary">Post recap</Button>
-              </Link>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       )}
 
-      <h2 style={{ marginTop: 22, marginBottom: 10 }}>Sessions</h2>
+      {/* Sessions list */}
+      <h2 className="mt-8 mb-3 text-lg font-semibold text-slate-900 dark:text-slate-100">
+        Sessions
+      </h2>
 
       {sessions.length === 0 ? (
-        <div style={{ color: "#444" }}>No sessions yet.</div>
+        <p className="text-slate-500 dark:text-slate-400">No sessions yet.</p>
       ) : (
-        <div style={{ display: "grid", gap: 10 }}>
+        <div className="grid gap-3">
           {sessions.map((sess) => (
-            <div key={sess.id} style={{ border: "1px solid #ddd", borderRadius: 14, padding: 14 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "baseline" }}>
+            <div
+              key={sess.id}
+              className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-800"
+            >
+              <div className="flex items-baseline justify-between gap-3">
                 <div>
-                  <div style={{ fontWeight: 800 }}>
+                  <div className="font-semibold text-slate-900 dark:text-slate-100">
                     {sess.passage?.reference || sess.title || "Session"}
                   </div>
-                  <div style={{ color: "#444", marginTop: 2 }}>{fmt(sess.startsAt)}</div>
+                  <div className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
+                    {fmt(sess.startsAt)}
+                  </div>
                 </div>
 
-                {role === "leader" && (
-                  <div style={{ display: "flex", gap: 10 }}>
-                    <Link href={`/s/${studyId}/session/${sess.id}`}>Edit</Link>
-                    <Link href={`/s/${studyId}/session/${sess.id}/recap`}>Recap</Link>
-                  </div>
-                )}
+                <div className="flex gap-3 text-sm">
+                  {isLeader ? (
+                    <>
+                      <Link
+                        href={`/s/${studyId}/session/${sess.id}`}
+                        className="text-[var(--accent)] hover:underline"
+                      >
+                        Edit
+                      </Link>
+                      <Link
+                        href={`/s/${studyId}/session/${sess.id}/recap`}
+                        className="text-[var(--accent)] hover:underline"
+                      >
+                        Recap
+                      </Link>
+                    </>
+                  ) : (
+                    <>
+                      <Link
+                        href={`/s/${studyId}/session/${sess.id}`}
+                        className="text-[var(--accent)] hover:underline"
+                      >
+                        View
+                      </Link>
+                      {sess.recap?.summary && (
+                        <Link
+                          href={`/s/${studyId}/session/${sess.id}/recap/view`}
+                          className="text-[var(--accent)] hover:underline"
+                        >
+                          Recap
+                        </Link>
+                      )}
+                    </>
+                  )}
+                </div>
               </div>
 
+              {/* Recap preview */}
               {sess.recap?.summary ? (
-                <div style={{ marginTop: 10, color: "#444" }}>
-                  <strong>Recap:</strong>{" "}
+                <div className="mt-2.5 text-sm text-slate-600 dark:text-slate-400">
+                  <span className="font-semibold">Recap:</span>{" "}
                   {sess.recap.summary.slice(0, 120)}
-                  {sess.recap.summary.length > 120 ? "…" : ""}
+                  {sess.recap.summary.length > 120 ? "..." : ""}
                 </div>
               ) : (
-                <div style={{ marginTop: 10, color: "#666" }}>No recap yet.</div>
+                <div className="mt-2.5 text-sm text-slate-400 dark:text-slate-500">
+                  No recap yet.
+                </div>
               )}
             </div>
           ))}

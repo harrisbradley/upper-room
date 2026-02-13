@@ -3,42 +3,64 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { getSession, updateSessionBasics } from "@/lib/services/sessions";
+import { getSession, updateSessionBasics, SessionDoc } from "@/lib/services/sessions";
+import { getMyRole } from "@/lib/services/studies";
+import { ensureAnonymousAuth } from "@/lib/firebase/auth";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { Textarea } from "@/components/ui/Textarea";
+import { PageLoading } from "@/components/ui/LoadingSpinner";
+import { ErrorMessage, PageError } from "@/components/ui/ErrorMessage";
 
-export default function SessionEditPage() {
+export default function SessionPage() {
   const params = useParams<{ studyId: string; sessionId: string }>();
   const { studyId, sessionId } = params;
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [saveSuccess, setSaveSuccess] = useState(false);
+  const [role, setRole] = useState<"leader" | "participant" | null>(null);
+  const [session, setSession] = useState<SessionDoc | null>(null);
 
+  // Edit-mode state (leader only)
   const [passageRef, setPassageRef] = useState("");
-  const [questionsText, setQuestionsText] = useState(""); // one per line
+  const [questionsText, setQuestionsText] = useState("");
   const [leaderNotes, setLeaderNotes] = useState("");
 
   useEffect(() => {
     (async () => {
       setLoading(true);
-      const s = await getSession(studyId, sessionId);
-      if (!s) {
-        setError("Session not found.");
-        setLoading(false);
-        return;
-      }
+      setError(null);
 
-      setPassageRef(s.passage?.reference ?? "");
-      setQuestionsText((s.agenda?.questions ?? []).join("\n"));
-      setLeaderNotes(s.agenda?.leaderNotes ?? "");
-      setLoading(false);
+      try {
+        const user = await ensureAnonymousAuth();
+        const r = await getMyRole(studyId, user.uid);
+        setRole(r);
+
+        const s = await getSession(studyId, sessionId);
+        if (!s) {
+          setError("Session not found.");
+          setLoading(false);
+          return;
+        }
+
+        setSession(s);
+        setPassageRef(s.passage?.reference ?? "");
+        setQuestionsText((s.agenda?.questions ?? []).join("\n"));
+        setLeaderNotes(s.agenda?.leaderNotes ?? "");
+      } catch (e: any) {
+        setError(e?.message ?? "Could not load session.");
+      } finally {
+        setLoading(false);
+      }
     })();
   }, [studyId, sessionId]);
 
   async function onSave() {
     setError(null);
     setSaving(true);
+    setSaveSuccess(false);
     try {
       const questions = questionsText
         .split("\n")
@@ -50,6 +72,8 @@ export default function SessionEditPage() {
         questions,
         leaderNotes,
       });
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 2000);
     } catch (e: any) {
       setError(e?.message ?? "Could not save.");
     } finally {
@@ -57,67 +81,122 @@ export default function SessionEditPage() {
     }
   }
 
-  if (loading) return <main>Loading...</main>;
-  if (error) return <main>{error}</main>;
+  if (loading) return <PageLoading />;
+  if (error && !session) return <PageError message={error} />;
 
-  return (
-    <main style={{ maxWidth: 760 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-        <h1 style={{ fontSize: 30, margin: 0 }}>Edit Session</h1>
-        <Link href={`/s/${studyId}`} style={{ color: "#444" }}>Back to dashboard</Link>
-      </div>
+  const isLeader = role === "leader";
 
-      <div style={{ display: "grid", gap: 14, marginTop: 16 }}>
-        <div>
-          <label style={{ fontWeight: 800 }}>Scripture passage</label>
-          <Input
-            value={passageRef}
-            onChange={(e) => setPassageRef(e.target.value)}
-            placeholder="e.g., John 1:1–18"
-          />
+  // --- PARTICIPANT READ-ONLY VIEW ---
+  if (!isLeader) {
+    const questions = session?.agenda?.questions ?? [];
+    const passage = session?.passage?.reference;
+    const hasRecap = !!session?.recap?.summary;
+
+    return (
+      <main className="mx-auto max-w-3xl px-4 py-8">
+        <div className="flex items-baseline justify-between gap-3">
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+            {session?.title || "Session"}
+          </h1>
+          <Link
+            href={`/s/${studyId}`}
+            className="text-sm text-slate-500 hover:text-[var(--accent)] dark:text-slate-400"
+          >
+            Back to dashboard
+          </Link>
         </div>
 
-        <div>
-          <label style={{ fontWeight: 800 }}>Discussion questions (one per line)</label>
-          <textarea
-            value={questionsText}
-            onChange={(e) => setQuestionsText(e.target.value)}
-            placeholder={"What stands out to you?\nWhat do we learn about Jesus?\nWhere do you see this in your life?"}
-            style={{
-              width: "100%",
-              minHeight: 160,
-              borderRadius: 14,
-              border: "1px solid #ccc",
-              padding: 12,
-              outline: "none",
-            }}
-          />
-        </div>
-
-        <div>
-          <label style={{ fontWeight: 800 }}>Leader notes (private)</label>
-          <textarea
-            value={leaderNotes}
-            onChange={(e) => setLeaderNotes(e.target.value)}
-            placeholder="Timing notes, reminders, themes to emphasize…"
-            style={{
-              width: "100%",
-              minHeight: 140,
-              borderRadius: 14,
-              border: "1px solid #ccc",
-              padding: 12,
-              outline: "none",
-            }}
-          />
-        </div>
-
-        {error && (
-          <div style={{ background: "#fee2e2", border: "1px solid #fecaca", padding: 12, borderRadius: 12 }}>
-            <strong>Oops:</strong> {error}
+        {passage && (
+          <div className="mt-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-800">
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+              Scripture Passage
+            </h2>
+            <p className="mt-2 text-lg font-medium text-slate-900 dark:text-slate-100">
+              {passage}
+            </p>
           </div>
         )}
 
-        <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+        {questions.length > 0 && (
+          <div className="mt-5 rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-800">
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+              Discussion Questions
+            </h2>
+            <ol className="mt-3 list-inside list-decimal space-y-2 text-slate-800 dark:text-slate-200">
+              {questions.map((q, i) => (
+                <li key={i}>{q}</li>
+              ))}
+            </ol>
+          </div>
+        )}
+
+        {!passage && questions.length === 0 && (
+          <p className="mt-6 text-slate-500 dark:text-slate-400">
+            The leader hasn&apos;t added session details yet. Check back soon.
+          </p>
+        )}
+
+        {hasRecap && (
+          <div className="mt-5">
+            <Link href={`/s/${studyId}/session/${sessionId}/recap/view`}>
+              <Button variant="secondary" size="sm">
+                View session recap
+              </Button>
+            </Link>
+          </div>
+        )}
+      </main>
+    );
+  }
+
+  // --- LEADER EDIT VIEW ---
+  return (
+    <main className="mx-auto max-w-3xl px-4 py-8">
+      <div className="flex items-baseline justify-between gap-3">
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+          Edit Session
+        </h1>
+        <Link
+          href={`/s/${studyId}`}
+          className="text-sm text-slate-500 hover:text-[var(--accent)] dark:text-slate-400"
+        >
+          Back to dashboard
+        </Link>
+      </div>
+
+      <div className="mt-6 grid gap-5">
+        <Input
+          label="Scripture passage"
+          value={passageRef}
+          onChange={(e) => setPassageRef(e.target.value)}
+          placeholder="e.g., John 1:1-18"
+        />
+
+        <Textarea
+          label="Discussion questions (one per line)"
+          value={questionsText}
+          onChange={(e) => setQuestionsText(e.target.value)}
+          placeholder={"What stands out to you?\nWhat do we learn about Jesus?\nHow can we apply this this week?"}
+          className="min-h-[160px]"
+        />
+
+        <Textarea
+          label="Leader notes (private)"
+          value={leaderNotes}
+          onChange={(e) => setLeaderNotes(e.target.value)}
+          placeholder="Timing notes, reminders, themes to emphasize..."
+          className="min-h-[140px]"
+        />
+
+        {error && <ErrorMessage title="Oops">{error}</ErrorMessage>}
+
+        {saveSuccess && (
+          <div className="rounded-xl border border-green-200 bg-green-50 p-3 text-sm text-green-800 dark:border-green-800 dark:bg-green-950 dark:text-green-200">
+            Session saved successfully.
+          </div>
+        )}
+
+        <div className="flex flex-wrap gap-3">
           <Button onClick={onSave} disabled={saving}>
             {saving ? "Saving..." : "Save session"}
           </Button>
