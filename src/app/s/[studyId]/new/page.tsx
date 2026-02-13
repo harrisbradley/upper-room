@@ -4,6 +4,9 @@ import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { createSession } from "@/lib/services/sessions";
 import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
+import { Textarea } from "@/components/ui/Textarea";
+import { ErrorMessage } from "@/components/ui/ErrorMessage";
 import Link from "next/link";
 
 export default function NewSessionPage() {
@@ -44,33 +47,48 @@ export default function NewSessionPage() {
   }
 
   return (
-    <main style={{ maxWidth: 760 }}>
-      <div style={{ display: "flex", justifyContent: "space-between" }}>
-        <h1>New Session</h1>
-        <Link href={`/s/${studyId}`}>Back</Link>
+    <main className="mx-auto max-w-3xl px-4 py-8">
+      <div className="flex items-baseline justify-between gap-3">
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+          New Session
+        </h1>
+        <Link
+          href={`/s/${studyId}`}
+          className="text-sm text-slate-500 hover:text-[var(--accent)] dark:text-slate-400"
+        >
+          Back
+        </Link>
       </div>
 
-      <div style={{ marginTop: 20, display: "grid", gap: 12 }}>
-        <input
-          type="datetime-local"
-          value={date}
-          onChange={(e) => setDate(e.target.value)}
-        />
+      <div className="mt-6 grid gap-5">
+        <div className="w-full">
+          <label className="mb-1 block text-sm font-semibold text-slate-700 dark:text-slate-300">
+            Date &amp; time
+          </label>
+          <input
+            type="datetime-local"
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 focus:border-[var(--accent)] focus:outline-none focus:ring-1 focus:ring-[var(--accent)] dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+          />
+        </div>
 
-        <input
-          placeholder="Scripture passage (e.g., John 3)"
+        <Input
+          label="Scripture passage"
+          placeholder="e.g., John 3"
           value={passage}
           onChange={(e) => setPassage(e.target.value)}
         />
 
-        <textarea
-          placeholder="Starter questions (one per line)"
+        <Textarea
+          label="Starter questions (one per line)"
           value={questionsText}
           onChange={(e) => setQuestionsText(e.target.value)}
-          style={{ minHeight: 120, padding: 12 }}
+          placeholder={"What stands out to you?\nWhat do we learn about God?"}
+          className="min-h-[120px]"
         />
 
-        {error && <div style={{ color: "red" }}>{error}</div>}
+        {error && <ErrorMessage title="Oops">{error}</ErrorMessage>}
 
         <Button onClick={onCreate} disabled={saving}>
           {saving ? "Creating..." : "Create session"}
