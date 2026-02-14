@@ -54,7 +54,7 @@ export default function JoinPage() {
   if (loading) {
     return (
       <main className="flex min-h-screen items-center justify-center px-4">
-        <p className="text-slate-500">Loading…</p>
+        <p className="text-slate-500">Loading...</p>
       </main>
     );
   }
@@ -77,7 +77,7 @@ export default function JoinPage() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center px-4">
       <Card className="w-full max-w-md">
-        <CardTitle className="mb-2">You’re invited</CardTitle>
+        <CardTitle className="mb-2">You&apos;re invited</CardTitle>
         <p className="mb-2 text-lg font-medium text-slate-800 dark:text-slate-200">
           {study.name}
         </p>
@@ -92,9 +92,18 @@ export default function JoinPage() {
           </p>
         )}
         {joined ? (
-          <p className="rounded-lg bg-green-100 py-2 text-center text-sm text-green-800 dark:bg-green-900/30 dark:text-green-200">
-            You’ve joined this study.
-          </p>
+          <div className="space-y-3">
+            <div className="rounded-lg bg-green-100 py-3 text-center dark:bg-green-900/30">
+              <p className="text-sm font-medium text-green-800 dark:text-green-200">
+                You&apos;ve joined this study!
+              </p>
+            </div>
+            <Link href={`/s/${study.id}`}>
+              <Button variant="primary" className="w-full">
+                Go to study
+              </Button>
+            </Link>
+          </div>
         ) : (
           <Button
             variant="primary"
@@ -102,16 +111,18 @@ export default function JoinPage() {
             onClick={handleJoin}
             disabled={joining}
           >
-            {joining ? "Joining…" : "Join study"}
+            {joining ? "Joining..." : "Join study"}
           </Button>
         )}
-        <div className="mt-6">
-          <Link href="/">
-            <Button variant="outline" className="w-full">
-              Back home
-            </Button>
-          </Link>
-        </div>
+        {!joined && (
+          <div className="mt-6">
+            <Link href="/">
+              <Button variant="outline" className="w-full">
+                Back home
+              </Button>
+            </Link>
+          </div>
+        )}
       </Card>
     </main>
   );

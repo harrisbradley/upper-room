@@ -55,14 +55,22 @@ export async function updateSessionBasics(
     passageRef: string;
     questions: string[];
     leaderNotes: string;
+    startsAt?: Date | null;
   }
 ) {
-  await updateDoc(doc(getFirebaseDb(), "studies", studyId, "sessions", sessionId), {
+  const updates: Record<string, unknown> = {
     "passage.reference": payload.passageRef,
     "agenda.questions": payload.questions,
     "agenda.leaderNotes": payload.leaderNotes,
+    title: payload.passageRef || "Session",
     updatedAt: serverTimestamp(),
-  });
+  };
+
+  if (payload.startsAt !== undefined) {
+    updates.startsAt = payload.startsAt ? Timestamp.fromDate(payload.startsAt) : null;
+  }
+
+  await updateDoc(doc(getFirebaseDb(), "studies", studyId, "sessions", sessionId), updates);
 }
 
 export async function postRecap(
@@ -101,7 +109,8 @@ export async function createSession(
     collection(getFirebaseDb(), "studies", studyId, "sessions"),
     {
       order: Date.now(), // simple ordering for now
-      scheduledAt: payload.scheduledAt
+      title: payload.passageRef || "New Session",
+      startsAt: payload.scheduledAt
         ? Timestamp.fromDate(payload.scheduledAt)
         : null,
       passage: {
