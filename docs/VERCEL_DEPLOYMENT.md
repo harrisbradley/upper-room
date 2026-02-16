@@ -117,6 +117,40 @@ If you want to use a custom domain:
 
 ### Firebase Errors
 
+#### Error: `auth/invalid-api-key`
+
+This error means your Firebase environment variables are not set correctly in Vercel. Follow these steps:
+
+1. **Go to Vercel Dashboard** → Your Project → Settings → Environment Variables
+
+2. **Verify all required variables are set:**
+   - `NEXT_PUBLIC_FIREBASE_API_KEY`
+   - `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN`
+   - `NEXT_PUBLIC_FIREBASE_PROJECT_ID`
+   - `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET`
+   - `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID`
+   - `NEXT_PUBLIC_FIREBASE_APP_ID`
+
+3. **Get the correct values from Firebase Console:**
+   - Go to [Firebase Console](https://console.firebase.google.com/)
+   - Select your project
+   - Click the gear icon ⚙️ → Project Settings
+   - Scroll to "Your apps" section
+   - Click on your web app (or create one if needed)
+   - Copy the values from the `firebaseConfig` object
+
+4. **Important checks:**
+   - Make sure there are **no extra spaces** before/after the values
+   - Make sure values are set for **Production** environment (or all environments)
+   - Values should match exactly what's in your `.env.local` file
+
+5. **After updating variables:**
+   - Go to Deployments tab
+   - Click the three dots (⋯) on the latest deployment
+   - Click "Redeploy" to trigger a new build with the updated variables
+
+#### Other Firebase Errors
+
 - Verify all environment variables are set correctly
 - Check Firebase Console for authorized domains
 - Ensure Firestore security rules allow anonymous access
