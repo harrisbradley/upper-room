@@ -128,7 +128,7 @@ export default function HomePage() {
             ) : studies.length === 0 ? (
               <Card>
                 <p className="text-center text-slate-600 dark:text-slate-400">
-                  You haven't created any studies yet. Create your first study below!
+                  You haven&apos;t created any studies yet. Create your first study below!
                 </p>
               </Card>
             ) : (
@@ -155,7 +155,7 @@ export default function HomePage() {
               <Card>
                 <CardTitle className="mb-4">Create a study</CardTitle>
                 <p className="mb-6 text-sm text-slate-600 dark:text-slate-400">
-                  You'll get a shareable link so others can join. No account needed.
+                  You&apos;ll get a shareable link so others can join. No account needed.
                 </p>
                 <form onSubmit={handleCreateStudy} className="space-y-4">
                   <Input
