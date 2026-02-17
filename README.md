@@ -33,6 +33,8 @@ Open [http://localhost:3000](http://localhost:3000).
 
 To deploy to Vercel, follow the step-by-step guide: **[docs/VERCEL_DEPLOYMENT.md](docs/VERCEL_DEPLOYMENT.md)**.
 
+For troubleshooting auto-deployment issues, see: **[docs/VERCEL_AUTO_DEPLOY.md](docs/VERCEL_AUTO_DEPLOY.md)**.
+
 ## Routes
 
 - **/** — Landing; CTA to create a study.
