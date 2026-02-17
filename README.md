@@ -29,6 +29,10 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000).
 
+## Deployment
+
+To deploy to Vercel, follow the step-by-step guide: **[docs/VERCEL_DEPLOYMENT.md](docs/VERCEL_DEPLOYMENT.md)**.
+
 ## Routes
 
 - **/** — Landing; CTA to create a study.

@@ -5,6 +5,10 @@ import {
   collection,
   addDoc,
   serverTimestamp,
+  query,
+  where,
+  orderBy,
+  getDocs,
 } from "firebase/firestore";
 import { getFirebaseDb } from "@/lib/firebase/client";
 import { ensureAnonymousAuth } from "@/lib/firebase/auth";
@@ -158,4 +162,29 @@ export async function getMyRole(
   if (!snap.exists()) return null;
 
   return snap.data().role ?? null;
-};
+}
+
+/**
+ * Fetches all studies created by the given user ID.
+ * Returns studies ordered by creation date (newest first).
+ */
+export async function getMyStudies(uid: string): Promise<Study[]> {
+  const db = getFirebaseDb();
+  const studiesRef = collection(db, STUDIES);
+  const q = query(
+    studiesRef,
+    where("createdBy", "==", uid),
+    orderBy("createdAt", "desc")
+  );
+  const snap = await getDocs(q);
+  return snap.docs.map((docSnap) => {
+    const data = docSnap.data();
+    return {
+      id: docSnap.id,
+      name: data.name ?? "",
+      joinCode: data.joinCode ?? "",
+      createdAt: data.createdAt,
+      createdBy: data.createdBy ?? "",
+    };
+  });
+}
