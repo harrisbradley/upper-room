@@ -19,7 +19,7 @@ Next.js (App Router) MVP for creating and joining Bible studies with shareable l
    Fill in your Firebase web app config in `.env.local`.
 
 4. **Firestore index (optional)**  
-   When you first load a study with sessions, Firestore may prompt you to create a composite index for `studies/{id}/sessions` with `order` (Ascending). Use the link in the error to create it.
+   When you first load a study with sessions, Firestore may prompt you to create a composite index for `studies/{id}/sessions` with `order` (Ascending). Use the link in the error to create it..
 
 ## Run
 
