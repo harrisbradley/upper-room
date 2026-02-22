@@ -128,7 +128,7 @@ export default function HomePage() {
             ) : studies.length === 0 ? (
               <Card>
                 <p className="text-center text-slate-600 dark:text-slate-400">
-                  You haven&apos;t created any studies yet. Create your first study below!
+                  You haven&apos;t created any studies yet. Create your first study below!!!!
                 </p>
               </Card>
             ) : (
