@@ -20,7 +20,8 @@ function validateFirebaseConfig() {
   if (missing.length > 0) {
     throw new Error(
       `Missing required Firebase environment variables: ${missing.join(', ')}. ` +
-        'Please set these in your Vercel project settings under Environment Variables.'
+        'For local dev: create .env.local with these variables (see .env.local.example). ' +
+        'For production: set them in your hosting provider (e.g. Vercel Environment Variables).'
     );
   }
 }
