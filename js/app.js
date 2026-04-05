@@ -43,6 +43,7 @@ async function initHome() {
     const studyList  = qs("#study-list");
     const emptyState = qs("#empty-state");
     const loadingEl  = qs("#loading");
+    const contentEl  = qs("#content");
     const msgEl      = qs("#msg");
 
     // Create form elements

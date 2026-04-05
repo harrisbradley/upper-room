@@ -83,20 +83,27 @@ async function getStudy(studyId) {
 
 /** Load all studies created by the given uid. */
 async function getMyStudies(uid) {
+    // No orderBy here — avoids requiring a composite Firestore index.
+    // Sort by createdAt client-side instead (newest first).
     const snap = await db.collection(STUDIES)
         .where("createdBy", "==", uid)
-        .orderBy("createdAt", "desc")
         .get();
-    return snap.docs.map(d => {
-        const data = d.data();
-        return {
-            id:        d.id,
-            name:      data.name      || "",
-            joinCode:  data.joinCode  || "",
-            createdAt: data.createdAt || null,
-            createdBy: data.createdBy || "",
-        };
-    });
+    return snap.docs
+        .map(d => {
+            const data = d.data();
+            return {
+                id:        d.id,
+                name:      data.name      || "",
+                joinCode:  data.joinCode  || "",
+                createdAt: data.createdAt || null,
+                createdBy: data.createdBy || "",
+            };
+        })
+        .sort((a, b) => {
+            const ta = a.createdAt ? a.createdAt.toMillis() : 0;
+            const tb = b.createdAt ? b.createdAt.toMillis() : 0;
+            return tb - ta; // newest first
+        });
 }
 
 /**
