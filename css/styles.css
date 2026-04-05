@@ -75,6 +75,74 @@ main {
   color: #f0c060;
 }
 
+/* header user area */
+.header-spacer { flex: 1; }
+
+.header-user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.header-user-name {
+  font-size: .85rem;
+  color: rgba(255,255,255,.8);
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.btn-header {
+  padding: 5px 12px;
+  font-size: .82rem;
+  font-weight: 600;
+  border-radius: var(--radius);
+  border: 1px solid rgba(255,255,255,.45);
+  background: transparent;
+  color: #fff;
+  cursor: pointer;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background .15s;
+}
+.btn-header:hover { background: rgba(255,255,255,.15); color: #fff; text-decoration: none; }
+
+/* auth pages */
+.auth-page { max-width: 400px; margin: 0 auto; padding-top: 32px; }
+
+.divider-text {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text-muted);
+  font-size: .85rem;
+  margin: 16px 0;
+}
+.divider-text::before, .divider-text::after {
+  content: ""; flex: 1; height: 1px; background: var(--border);
+}
+
+.btn-google {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: .95rem;
+  font-weight: 600;
+  color: var(--text);
+  cursor: pointer;
+  transition: background .15s, box-shadow .15s;
+  text-decoration: none;
+}
+.btn-google:hover { background: #f8f8f8; box-shadow: 0 1px 4px rgba(0,0,0,.1); color: var(--text); text-decoration: none; }
+.btn-google svg { flex-shrink: 0; }
+
 .header-back {
   color: rgba(255,255,255,.7);
   font-size: .9rem;

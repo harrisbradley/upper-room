@@ -1,6 +1,34 @@
 // js/app.js
 // Page controllers — one init function per page, called from each HTML file.
 
+// ─── Header auth widget ────────────────────────────────────────────────────
+// Call initHeader() on every page to show user name + sign-out in the header.
+
+function initHeader() {
+    const userArea  = qs("#header-user");
+    const nameEl    = qs("#header-user-name");
+    const signoutBtn= qs("#header-signout");
+    const signinBtn = qs("#header-signin");
+
+    auth.onAuthStateChanged(user => {
+        if (user && !user.isAnonymous) {
+            if (nameEl)    nameEl.textContent = userDisplayName(user);
+            if (userArea)  show(userArea);
+            if (signinBtn) hide(signinBtn);
+        } else {
+            if (userArea)  hide(userArea);
+            if (signinBtn) show(signinBtn);
+        }
+    });
+
+    if (signoutBtn) {
+        signoutBtn.addEventListener("click", async () => {
+            await signOut();
+            location.href = "index.html";
+        });
+    }
+}
+
 // ─── Shared helpers ────────────────────────────────────────────────────────
 
 function qs(sel, ctx) { return (ctx || document).querySelector(sel); }
@@ -40,44 +68,38 @@ function parseLines(str) {
 // ─── Home page ─────────────────────────────────────────────────────────────
 
 async function initHome() {
-    const studyList  = qs("#study-list");
-    const emptyState = qs("#empty-state");
-    const loadingEl  = qs("#loading");
-    const contentEl  = qs("#content");
-    const msgEl      = qs("#msg");
+    initHeader();
+
+    const studyList    = qs("#study-list");
+    const emptyState   = qs("#empty-state");
+    const loadingEl    = qs("#loading");
+    const contentEl    = qs("#content");
+    const msgEl        = qs("#msg");
+    const myStudiesSec = qs("#my-studies-section");
+    const signedOutSec = qs("#signed-out-section");
 
     // Create form elements
-    const createSection = qs("#create-section");
-    const createBtn     = qs("#create-btn");
-    const createForm    = qs("#create-form");
-    const studyNameEl   = qs("#study-name");
-    const cancelBtn     = qs("#cancel-create");
-    const submitBtn     = qs("#submit-create");
+    const createBtn   = qs("#create-btn");
+    const createForm  = qs("#create-form");
+    const studyNameEl = qs("#study-name");
+    const cancelBtn   = qs("#cancel-create");
+    const submitBtn   = qs("#submit-create");
 
     // Join form elements
     const joinForm  = qs("#join-form");
     const joinCode  = qs("#join-code");
     const joinMsgEl = qs("#join-msg");
 
-    let currentUser = null;
+    // Wait for Firebase auth to resolve
+    const currentUser = await waitForAuth();
+    const isLoggedIn  = currentUser && !currentUser.isAnonymous;
 
-    // Ensure anonymous auth
-    try {
-        currentUser = await ensureAnonymousAuth();
-    } catch (err) {
-        hide(loadingEl);
-        setError(msgEl, "Could not connect to Firebase. Check your internet connection.");
-        console.error(err);
-        return;
-    }
-
-    // Load studies
+    // Load studies (only if logged in)
     async function loadStudies() {
         hide(emptyState);
         studyList.innerHTML = "";
         try {
             const studies = await getMyStudies(currentUser.uid);
-            hide(loadingEl);
             if (studies.length === 0) {
                 show(emptyState);
             } else {
@@ -95,14 +117,21 @@ async function initHome() {
                 });
             }
         } catch (err) {
-            hide(loadingEl);
             console.error("Failed to load studies:", err);
         }
     }
 
-    await loadStudies();
     hide(loadingEl);
     show(contentEl);
+
+    if (isLoggedIn) {
+        show(myStudiesSec);
+        hide(signedOutSec);
+        await loadStudies();
+    } else {
+        hide(myStudiesSec);
+        show(signedOutSec);
+    }
 
     // Toggle create form
     createBtn.addEventListener("click", () => {
@@ -149,6 +178,7 @@ async function initHome() {
 // ─── Study dashboard ────────────────────────────────────────────────────────
 
 async function initStudy() {
+    initHeader();
     const studyId = getParam("id");
     if (!studyId) { location.href = "index.html"; return; }
 
@@ -299,6 +329,7 @@ async function initStudy() {
 // ─── Session page ───────────────────────────────────────────────────────────
 
 async function initSession() {
+    initHeader();
     const studyId   = getParam("studyId");
     const sessionId = getParam("sessionId");
     if (!studyId || !sessionId) { location.href = "index.html"; return; }
@@ -521,6 +552,7 @@ async function initSession() {
 // ─── Join page ──────────────────────────────────────────────────────────────
 
 async function initJoin() {
+    initHeader();
     const codeParam   = getParam("code");
     const loadingEl   = qs("#loading");
     const contentEl   = qs("#content");
@@ -605,6 +637,139 @@ async function initJoin() {
                 joinBtn.textContent = "Join This Study";
             }
         });
+    }
+}
+
+// ─── Login page ──────────────────────────────────────────────────────────────
+
+async function initLogin() {
+    // Redirect already-logged-in users
+    const existing = await waitForAuth();
+    if (existing && !existing.isAnonymous) {
+        location.href = "index.html";
+        return;
+    }
+
+    const emailInput  = qs("#login-email");
+    const passInput   = qs("#login-password");
+    const loginForm   = qs("#login-form");
+    const loginMsg    = qs("#login-msg");
+    const submitBtn   = qs("#login-submit");
+    const googleBtn   = qs("#google-signin");
+
+    if (loginForm) {
+        loginForm.addEventListener("submit", async e => {
+            e.preventDefault();
+            const email    = emailInput.value.trim();
+            const password = passInput.value;
+            if (!email || !password) { setError(loginMsg, "Please enter your email and password."); return; }
+            hide(loginMsg);
+            submitBtn.disabled = true;
+            submitBtn.textContent = "Signing in…";
+            try {
+                await signInWithEmail(email, password);
+                location.href = getParam("next") || "index.html";
+            } catch (err) {
+                setError(loginMsg, friendlyAuthError(err));
+                submitBtn.disabled = false;
+                submitBtn.textContent = "Sign In";
+            }
+        });
+    }
+
+    if (googleBtn) {
+        googleBtn.addEventListener("click", async () => {
+            hide(loginMsg);
+            googleBtn.disabled = true;
+            try {
+                await signInWithGoogle();
+                location.href = getParam("next") || "index.html";
+            } catch (err) {
+                if (err.code !== "auth/popup-closed-by-user") {
+                    setError(loginMsg, friendlyAuthError(err));
+                }
+                googleBtn.disabled = false;
+            }
+        });
+    }
+}
+
+// ─── Signup page ─────────────────────────────────────────────────────────────
+
+async function initSignup() {
+    // Redirect already-logged-in users
+    const existing = await waitForAuth();
+    if (existing && !existing.isAnonymous) {
+        location.href = "index.html";
+        return;
+    }
+
+    const nameInput   = qs("#signup-name");
+    const emailInput  = qs("#signup-email");
+    const passInput   = qs("#signup-password");
+    const signupForm  = qs("#signup-form");
+    const signupMsg   = qs("#signup-msg");
+    const submitBtn   = qs("#signup-submit");
+    const googleBtn   = qs("#google-signup");
+
+    if (signupForm) {
+        signupForm.addEventListener("submit", async e => {
+            e.preventDefault();
+            const name     = nameInput.value.trim();
+            const email    = emailInput.value.trim();
+            const password = passInput.value;
+            if (!name)     { setError(signupMsg, "Please enter your name.");     return; }
+            if (!email)    { setError(signupMsg, "Please enter your email.");    return; }
+            if (password.length < 6) { setError(signupMsg, "Password must be at least 6 characters."); return; }
+            hide(signupMsg);
+            submitBtn.disabled = true;
+            submitBtn.textContent = "Creating account…";
+            try {
+                await signUpWithEmail(name, email, password);
+                location.href = "index.html";
+            } catch (err) {
+                setError(signupMsg, friendlyAuthError(err));
+                submitBtn.disabled = false;
+                submitBtn.textContent = "Create Account";
+            }
+        });
+    }
+
+    if (googleBtn) {
+        googleBtn.addEventListener("click", async () => {
+            hide(signupMsg);
+            googleBtn.disabled = true;
+            try {
+                await signInWithGoogle();
+                location.href = "index.html";
+            } catch (err) {
+                if (err.code !== "auth/popup-closed-by-user") {
+                    setError(signupMsg, friendlyAuthError(err));
+                }
+                googleBtn.disabled = false;
+            }
+        });
+    }
+}
+
+// ─── Auth error messages ─────────────────────────────────────────────────────
+
+function friendlyAuthError(err) {
+    switch (err.code) {
+        case "auth/user-not-found":
+        case "auth/wrong-password":
+        case "auth/invalid-credential":
+            return "Incorrect email or password.";
+        case "auth/email-already-in-use":
+            return "An account with that email already exists.";
+        case "auth/weak-password":
+            return "Password must be at least 6 characters.";
+        case "auth/invalid-email":
+            return "Please enter a valid email address.";
+        case "auth/too-many-requests":
+            return "Too many attempts. Please wait a moment and try again.";
+        default:
+            return err.message || "Something went wrong.";
     }
 }
 

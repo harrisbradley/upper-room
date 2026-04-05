@@ -1,11 +1,47 @@
 // js/auth.js
-// Anonymous authentication helper
+// Authentication helpers — email/password, Google, anonymous, sign-out
 
-/**
- * Returns the current user, signing in anonymously if needed.
- * Firebase persists the anonymous session in IndexedDB, so the same
- * user comes back on subsequent visits from the same browser.
- */
+// ── Sign in with email/password ──────────────────────────────────────────
+async function signInWithEmail(email, password) {
+    const cred = await auth.signInWithEmailAndPassword(email, password);
+    return cred.user;
+}
+
+// ── Sign up with email/password ──────────────────────────────────────────
+async function signUpWithEmail(displayName, email, password) {
+    const cred = await auth.createUserWithEmailAndPassword(email, password);
+    await cred.user.updateProfile({ displayName });
+    return cred.user;
+}
+
+// ── Google sign-in (also works as sign-up) ───────────────────────────────
+async function signInWithGoogle() {
+    const provider = new firebase.auth.GoogleAuthProvider();
+    const cred = await auth.signInWithPopup(provider);
+    return cred.user;
+}
+
+// ── Sign out ─────────────────────────────────────────────────────────────
+async function signOut() {
+    await auth.signOut();
+}
+
+// ── Get current user synchronously ───────────────────────────────────────
+function getCurrentUser() {
+    return auth.currentUser;
+}
+
+// ── Wait for auth to resolve, then return the user (or null) ─────────────
+function waitForAuth() {
+    return new Promise(resolve => {
+        const unsub = auth.onAuthStateChanged(user => {
+            unsub();
+            resolve(user);
+        });
+    });
+}
+
+// ── Anonymous auth (used silently for join flow) ─────────────────────────
 function ensureAnonymousAuth() {
     return new Promise((resolve, reject) => {
         const unsub = auth.onAuthStateChanged(user => {
@@ -19,4 +55,11 @@ function ensureAnonymousAuth() {
             }
         });
     });
+}
+
+// ── Display name helper ──────────────────────────────────────────────────
+function userDisplayName(user) {
+    if (!user) return "";
+    if (user.isAnonymous) return "";
+    return user.displayName || user.email || "User";
 }

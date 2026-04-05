@@ -5,13 +5,19 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Upper Room — Bible Study Organizer</title>
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-  <link rel="stylesheet" href="css/styles.css?v=3">
+  <link rel="stylesheet" href="css/styles.css?v=4">
 </head>
 <body>
 
 <header class="site-header">
   <div class="container">
     <a href="index.html" class="logo">Upper <span>Room</span></a>
+    <div class="header-spacer"></div>
+    <div id="header-user" class="header-user hidden">
+      <span id="header-user-name" class="header-user-name"></span>
+      <button id="header-signout" class="btn-header">Sign out</button>
+    </div>
+    <a id="header-signin" href="login.html" class="btn-header hidden">Sign In</a>
   </div>
 </header>
 
@@ -27,40 +33,57 @@
     <!-- Global message -->
     <div id="msg" class="msg hidden"></div>
 
-    <!-- My Studies -->
     <div id="content" class="hidden">
 
-      <h2 class="page-title" style="margin-bottom:16px;">My Studies</h2>
+      <!-- ── Signed-in view ─────────────────────────────────── -->
+      <div id="my-studies-section" class="hidden">
 
-      <div id="study-list" class="study-list"></div>
+        <h2 class="page-title" style="margin-bottom:16px;">My Studies</h2>
 
-      <div id="empty-state" class="empty-state hidden">
-        <p>You haven't created any studies yet. Start one below!</p>
-      </div>
+        <div id="study-list" class="study-list"></div>
 
-      <!-- Create Study -->
-      <div class="mt-24">
-        <button id="create-btn" class="btn btn-primary btn-lg">+ New Study</button>
-
-        <div id="create-form" class="card mt-16 hidden">
-          <h3 style="font-size:1.1rem;font-weight:700;color:var(--primary);margin-bottom:4px;">Create a study</h3>
-          <p class="text-muted mb-16">You'll get a shareable code so others can join. No account needed.</p>
-          <form>
-            <div class="form-group">
-              <label for="study-name">Study name</label>
-              <input type="text" id="study-name" placeholder="e.g. Romans small group" autocomplete="off">
-            </div>
-            <div class="flex gap-8">
-              <button type="submit" id="submit-create" class="btn btn-primary flex-1">Create Study</button>
-              <button type="button" id="cancel-create" class="btn btn-ghost">Cancel</button>
-            </div>
-          </form>
+        <div id="empty-state" class="empty-state hidden">
+          <p>You haven't created any studies yet. Start one below!</p>
         </div>
-      </div>
 
-      <!-- Join Study -->
-      <div class="divider mt-24">or</div>
+        <!-- Create Study -->
+        <div class="mt-24">
+          <button id="create-btn" class="btn btn-primary btn-lg">+ New Study</button>
 
+          <div id="create-form" class="card mt-16 hidden">
+            <h3 style="font-size:1.1rem;font-weight:700;color:var(--primary);margin-bottom:4px;">Create a study</h3>
+            <p class="text-muted mb-16">You'll get a shareable code so others can join.</p>
+            <form>
+              <div class="form-group">
+                <label for="study-name">Study name</label>
+                <input type="text" id="study-name" placeholder="e.g. Romans small group" autocomplete="off">
+              </div>
+              <div class="flex gap-8">
+                <button type="submit" id="submit-create" class="btn btn-primary flex-1">Create Study</button>
+                <button type="button" id="cancel-create" class="btn btn-ghost">Cancel</button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <div class="divider mt-24">or</div>
+
+      </div><!-- /my-studies-section -->
+
+      <!-- ── Signed-out view ────────────────────────────────── -->
+      <div id="signed-out-section" class="hidden">
+        <div class="card text-center" style="padding:32px 24px;margin-bottom:20px;">
+          <h2 style="font-size:1.3rem;font-weight:700;color:var(--primary);margin-bottom:8px;">Welcome to Upper Room</h2>
+          <p class="text-muted" style="margin-bottom:20px;">Organize and share your Bible study sessions.</p>
+          <div class="flex gap-8" style="justify-content:center;flex-wrap:wrap;">
+            <a href="signup.html" class="btn btn-primary">Create an Account</a>
+            <a href="login.html" class="btn btn-outline">Sign In</a>
+          </div>
+        </div>
+        <div class="divider">or join a study with a code</div>
+      </div><!-- /signed-out-section -->
+
+      <!-- ── Join Study (always visible) ───────────────────── -->
       <div class="card">
         <h3 style="font-size:1rem;font-weight:700;color:var(--primary);margin-bottom:4px;">Join a study</h3>
         <p class="text-muted mb-16">Have a join code from your study leader?</p>
@@ -88,10 +111,10 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
 <!-- App scripts -->
-<script src="js/firebase-config.js?v=3"></script>
-<script src="js/auth.js?v=3"></script>
-<script src="js/studies.js?v=3"></script>
-<script src="js/app.js?v=3"></script>
+<script src="js/firebase-config.js?v=4"></script>
+<script src="js/auth.js?v=4"></script>
+<script src="js/studies.js?v=4"></script>
+<script src="js/app.js?v=4"></script>
 <script>initHome();</script>
 
 </body>
