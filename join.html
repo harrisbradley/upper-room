@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Join a Study — Upper Room</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="container">
+    <a href="index.html" class="header-back">← Home</a>
+    <a href="index.html" class="logo">Upper <span>Room</span></a>
+  </div>
+</header>
+
+<main>
+  <div class="container">
+
+    <!-- Loading -->
+    <div id="loading" class="loading-block">
+      <div class="spinner spinner-lg"></div>
+      <span>Looking up join code…</span>
+    </div>
+
+    <!-- Error state -->
+    <div id="error" class="hidden" style="margin-top:24px;">
+      <div class="msg msg-error"></div>
+      <div class="text-center mt-16">
+        <a href="index.html" class="btn btn-outline">← Back to Home</a>
+      </div>
+    </div>
+
+    <!-- No code param: show entry form -->
+    <div id="code-form-section" class="hidden" style="max-width:400px;margin:0 auto;padding-top:32px;">
+      <h1 class="page-title text-center">Join a Study</h1>
+      <p class="page-subtitle text-center">Enter the 6-character code from your study leader.</p>
+      <div class="card">
+        <form id="code-form">
+          <div class="form-group">
+            <label for="code-input">Join Code</label>
+            <input type="text" id="code-input" placeholder="e.g. ABC123" maxlength="6"
+                   autocomplete="off" autocapitalize="characters"
+                   style="text-transform:uppercase;letter-spacing:.15em;text-align:center;font-size:1.4rem;font-weight:700;">
+          </div>
+          <div id="code-msg" class="msg hidden"></div>
+          <button type="submit" class="btn btn-primary btn-full btn-lg mt-8">Find Study →</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Study preview (code resolved) -->
+    <div id="study-preview" class="hidden" style="max-width:400px;margin:0 auto;padding-top:32px;">
+      <h1 class="page-title text-center">You're invited!</h1>
+      <p class="page-subtitle text-center">You're about to join:</p>
+
+      <div class="card text-center">
+        <div style="font-size:1.4rem;font-weight:700;color:var(--primary);margin-bottom:8px;" id="preview-study-name"></div>
+        <div id="join-msg" class="msg hidden"></div>
+        <button id="join-btn" class="btn btn-accent btn-full btn-lg mt-16">Join This Study →</button>
+        <div class="mt-12">
+          <a href="index.html" class="text-muted" style="font-size:.85rem;">Cancel</a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+<script src="js/firebase-config.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/studies.js"></script>
+<script src="js/app.js"></script>
+<script>initJoin();</script>
+
+</body>
+</html>

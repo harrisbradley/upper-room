@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Upper Room — Bible Study Organizer</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="container">
+    <a href="index.html" class="logo">Upper <span>Room</span></a>
+  </div>
+</header>
+
+<main>
+  <div class="container">
+
+    <!-- Loading -->
+    <div id="loading" class="loading-block">
+      <div class="spinner spinner-lg"></div>
+      <span>Loading your studies…</span>
+    </div>
+
+    <!-- Global message -->
+    <div id="msg" class="msg hidden"></div>
+
+    <!-- My Studies -->
+    <div id="content" class="hidden">
+
+      <h2 class="page-title" style="margin-bottom:16px;">My Studies</h2>
+
+      <div id="study-list" class="study-list"></div>
+
+      <div id="empty-state" class="empty-state hidden">
+        <p>You haven't created any studies yet. Start one below!</p>
+      </div>
+
+      <!-- Create Study -->
+      <div class="mt-24">
+        <button id="create-btn" class="btn btn-primary btn-lg">+ New Study</button>
+
+        <div id="create-form" class="card mt-16 hidden">
+          <h3 style="font-size:1.1rem;font-weight:700;color:var(--primary);margin-bottom:4px;">Create a study</h3>
+          <p class="text-muted mb-16">You'll get a shareable code so others can join. No account needed.</p>
+          <form>
+            <div class="form-group">
+              <label for="study-name">Study name</label>
+              <input type="text" id="study-name" placeholder="e.g. Romans small group" autocomplete="off">
+            </div>
+            <div class="flex gap-8">
+              <button type="submit" id="submit-create" class="btn btn-primary flex-1">Create Study</button>
+              <button type="button" id="cancel-create" class="btn btn-ghost">Cancel</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Join Study -->
+      <div class="divider mt-24">or</div>
+
+      <div class="card">
+        <h3 style="font-size:1rem;font-weight:700;color:var(--primary);margin-bottom:4px;">Join a study</h3>
+        <p class="text-muted mb-16">Have a join code from your study leader?</p>
+        <form id="join-form">
+          <div class="form-row">
+            <div class="form-group">
+              <input type="text" id="join-code" placeholder="Enter code (e.g. ABC123)"
+                     maxlength="6" autocomplete="off"
+                     style="text-transform:uppercase;letter-spacing:.1em;text-align:center;font-weight:700;">
+            </div>
+            <button type="submit" class="btn btn-outline">Join →</button>
+          </div>
+          <div id="join-msg" class="msg hidden"></div>
+        </form>
+      </div>
+
+    </div><!-- /content -->
+
+  </div>
+</main>
+
+<!-- Firebase SDK (compat) -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+<!-- App scripts -->
+<script src="js/firebase-config.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/studies.js"></script>
+<script src="js/app.js"></script>
+<script>initHome();</script>
+
+</body>
+</html>
