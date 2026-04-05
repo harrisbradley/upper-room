@@ -4,7 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Session — Upper Room</title>
-  <link rel="stylesheet" href="css/styles.css">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <link rel="stylesheet" href="css/styles.css?v=4">
 </head>
 <body>
 
@@ -12,6 +13,12 @@
   <div class="container">
     <a id="study-link" href="index.html" class="header-back">← Study</a>
     <a href="index.html" class="logo">Upper <span>Room</span></a>
+    <div class="header-spacer"></div>
+    <div id="header-user" class="header-user hidden">
+      <span id="header-user-name" class="header-user-name"></span>
+      <button id="header-signout" class="btn-header">Sign out</button>
+    </div>
+    <a id="header-signin" href="login.html" class="btn-header hidden">Sign In</a>
   </div>
 </header>
 
@@ -133,11 +140,11 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
-<script src="js/firebase-config.js"></script>
-<script src="js/auth.js"></script>
-<script src="js/studies.js"></script>
-<script src="js/sessions.js"></script>
-<script src="js/app.js"></script>
+<script src="js/firebase-config.js?v=4"></script>
+<script src="js/auth.js?v=4"></script>
+<script src="js/studies.js?v=4"></script>
+<script src="js/sessions.js?v=4"></script>
+<script src="js/app.js?v=4"></script>
 <script>initSession();</script>
 
 </body>
