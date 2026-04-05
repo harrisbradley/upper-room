@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Session — Upper Room</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="container">
+    <a id="study-link" href="index.html" class="header-back">← Study</a>
+    <a href="index.html" class="logo">Upper <span>Room</span></a>
+  </div>
+</header>
+
+<main>
+  <div class="container">
+
+    <!-- Loading -->
+    <div id="loading" class="loading-block">
+      <div class="spinner spinner-lg"></div>
+      <span>Loading session…</span>
+    </div>
+
+    <!-- Error -->
+    <div id="error" class="msg msg-error hidden" style="margin-top:24px;"></div>
+
+    <!-- Content -->
+    <div id="content" class="hidden">
+
+      <!-- Scripture -->
+      <div class="card">
+        <div class="section-title">Scripture</div>
+        <div class="scripture-block">
+          <div id="passage-ref" class="scripture-ref">—</div>
+        </div>
+
+        <!-- Edit button (leader only) -->
+        <div id="edit-section" class="hidden">
+          <button id="edit-btn" class="btn btn-ghost btn-sm">Edit session</button>
+
+          <form id="edit-form" class="hidden" style="margin-top:16px;">
+            <div class="form-group">
+              <label for="edit-passage">Scripture passage</label>
+              <input type="text" id="edit-passage" placeholder="e.g. John 3:16-21" autocomplete="off">
+            </div>
+            <div class="form-group">
+              <label for="edit-questions">Discussion questions <span class="text-muted">(one per line)</span></label>
+              <textarea id="edit-questions" rows="5"></textarea>
+            </div>
+            <div class="form-group">
+              <label for="edit-leader-notes">Leader notes <span class="text-muted">(private — only you see these)</span></label>
+              <textarea id="edit-leader-notes" rows="3"></textarea>
+            </div>
+            <div id="edit-msg" class="msg hidden"></div>
+            <div class="flex gap-8 mt-12">
+              <button type="submit" id="save-edit" class="btn btn-primary flex-1">Save Changes</button>
+              <button type="button" id="cancel-edit" class="btn btn-ghost">Cancel</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Discussion Questions -->
+      <div class="card mt-16">
+        <div class="section-title">Discussion Questions</div>
+        <ol id="questions-list" class="question-list"></ol>
+      </div>
+
+      <!-- Leader Notes (leader only, read mode) -->
+      <div id="leader-notes-section" class="card mt-16 hidden">
+        <div class="section-title">Your Notes <span class="text-muted" style="font-size:.7rem;text-transform:none;letter-spacing:0;">(private)</span></div>
+        <p id="leader-notes" style="white-space:pre-wrap;font-size:.95rem;"></p>
+      </div>
+
+      <!-- Recap: view -->
+      <div id="recap-view" class="card mt-16 hidden">
+        <div class="section-title" style="color:var(--success);">Session Recap</div>
+        <p class="text-muted mt-4" style="font-size:.8rem;">Posted <span id="recap-date"></span></p>
+
+        <div class="mt-12">
+          <strong style="font-size:.85rem;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);">Summary</strong>
+          <p id="recap-summary-text" style="margin-top:6px;white-space:pre-wrap;"></p>
+        </div>
+
+        <div class="mt-16">
+          <strong style="font-size:.85rem;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);">Key Takeaways</strong>
+          <ul id="recap-takeaways-list" style="margin-top:6px;padding-left:20px;"></ul>
+        </div>
+
+        <div class="mt-16">
+          <strong style="font-size:.85rem;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);">Prayer Intentions</strong>
+          <ul id="recap-prayers-list" style="margin-top:6px;padding-left:20px;"></ul>
+        </div>
+      </div>
+
+      <!-- Recap: post form (leader only, no recap yet) -->
+      <div id="recap-form-section" class="card mt-16 hidden">
+        <div class="section-title">Post a Recap</div>
+        <p class="text-muted mb-16">Share a summary of what was discussed.</p>
+
+        <button id="post-recap-btn" class="btn btn-accent">+ Post Recap</button>
+
+        <form id="recap-form" class="hidden" style="margin-top:16px;">
+          <div class="form-group">
+            <label for="recap-summary-input">Summary</label>
+            <textarea id="recap-summary-input" rows="4" placeholder="What did you discuss? What stood out?"></textarea>
+          </div>
+          <div class="form-group">
+            <label for="recap-takeaways">Key Takeaways <span class="text-muted">(one per line)</span></label>
+            <textarea id="recap-takeaways" rows="3" placeholder="The Spirit intercedes for us&#10;Nothing can separate us from God's love"></textarea>
+          </div>
+          <div class="form-group">
+            <label for="recap-prayers">Prayer Intentions <span class="text-muted">(one per line)</span></label>
+            <textarea id="recap-prayers" rows="3" placeholder="Healing for Sarah&#10;Guidance for the group"></textarea>
+          </div>
+          <div id="recap-msg" class="msg hidden"></div>
+          <div class="flex gap-8 mt-12">
+            <button type="submit" id="save-recap" class="btn btn-accent flex-1">Post Recap</button>
+            <button type="button" id="cancel-recap" class="btn btn-ghost">Cancel</button>
+          </div>
+        </form>
+      </div>
+
+    </div><!-- /content -->
+  </div>
+</main>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+<script src="js/firebase-config.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/studies.js"></script>
+<script src="js/sessions.js"></script>
+<script src="js/app.js"></script>
+<script>initSession();</script>
+
+</body>
+</html>
