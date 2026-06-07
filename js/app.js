@@ -58,9 +58,14 @@ function getAvatarHtml(avatarUrl, displayName, size = 80) {
         return `<img src="${escapeHtml(avatarUrl)}" alt="Avatar" style="width:${size}px;height:${size}px;border-radius:50%;object-fit:cover;display:block;">`;
     }
     const initial = displayName ? displayName.charAt(0).toUpperCase() : "?";
-    const colors = ["#1e3a5f", "#c8922a", "#16a34a", "#7c3aed", "#dc2626", "#0d9488"];
-    const charCodeSum = displayName ? displayName.split("").reduce((sum, char) => sum + char.charCodeAt(0), 0) : 0;
-    const color = colors[charCodeSum % colors.length];
+    
+    // If avatarUrl is a hex color preset, use it directly. Otherwise, fall back to a stable hash color.
+    let color = avatarUrl;
+    if (!color || !color.startsWith("#")) {
+        const colors = ["#1e3a5f", "#c8922a", "#16a34a", "#7c3aed", "#dc2626", "#0d9488"];
+        const charCode = initial.charCodeAt(0) || 0;
+        color = colors[charCode % colors.length];
+    }
     
     return `
         <div style="width:${size}px;height:${size}px;border-radius:50%;background:${color};color:#fff;
