@@ -995,8 +995,6 @@ async function initProfile() {
 
     const avatarPreview = qs("#avatar-preview");
     const avatarPresets = qs("#avatar-presets");
-    const avatarFileInput = qs("#avatar-file-input");
-    const avatarTrigger = qs("#avatar-trigger");
 
     const passwordCard = qs("#password-card");
     const passwordForm = qs("#password-form");
@@ -1074,41 +1072,7 @@ async function initProfile() {
         });
     });
 
-    // Setup custom file upload triggers
-    if (avatarTrigger) {
-        avatarTrigger.addEventListener("click", () => {
-            avatarFileInput.click();
-        });
-    }
 
-    avatarFileInput.addEventListener("change", async () => {
-        const file = avatarFileInput.files[0];
-        if (!file) return;
-
-        // Visual feedback
-        avatarPreview.innerHTML = `
-            <div style="width:90px;height:90px;border-radius:50%;background:#e5e7eb;
-                        display:flex;align-items:center;justify-content:center;">
-                <div class="spinner"></div>
-            </div>
-        `;
-
-        try {
-            const downloadUrl = await uploadAvatar(currentUser.uid, file);
-            currentAvatarUrl = downloadUrl;
-            
-            // Save avatar immediately in Firestore
-            await saveUserProfile(currentUser.uid, { avatarUrl: downloadUrl });
-            renderAvatar();
-            setSuccess(profileMsg, "Avatar uploaded and saved successfully!");
-            
-            // Update header avatar
-            initHeader();
-        } catch (err) {
-            setError(profileMsg, err.message || "Failed to upload avatar image. Make sure Storage is enabled.");
-            renderAvatar();
-        }
-    });
 
     // Check auth provider (Google vs Email)
     const isGoogleUser = currentUser.providerData.some(p => p.providerId === "google.com");

@@ -596,30 +596,8 @@ textarea { resize: vertical; min-height: 80px; }
 }
 .avatar-preview-wrapper {
   position: relative;
-  cursor: pointer;
   width: 90px;
   height: 90px;
-}
-.avatar-upload-btn {
-  position: absolute;
-  bottom: 0;
-  right: 0;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  background: var(--primary);
-  color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: .8rem;
-  border: 2px solid #fff;
-  cursor: pointer;
-  box-shadow: var(--shadow);
-  transition: transform .15s;
-}
-.avatar-preview-wrapper:hover .avatar-upload-btn {
-  transform: scale(1.1);
 }
 .avatar-presets {
   display: flex;

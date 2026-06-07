@@ -115,10 +115,5 @@ async function updateUserPassword(newPassword) {
     }
 }
 
-/** Upload avatar image to Firebase Storage */
-async function uploadAvatar(uid, file) {
-    const ref = firebase.storage().ref().child(`avatars/${uid}`);
-    const snap = await ref.put(file);
-    return await snap.ref.getDownloadURL();
-}
+
 
