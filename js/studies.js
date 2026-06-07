@@ -52,11 +52,19 @@ async function createStudy(studyName) {
         });
 
     // Record leader membership
+    const leaderData = {
+        role:     "leader",
+        joinedAt: firebase.firestore.FieldValue.serverTimestamp(),
+    };
+    if (user.displayName) {
+        leaderData.displayName = user.displayName;
+    } else if (user.email) {
+        leaderData.displayName = user.email;
+    } else {
+        leaderData.displayName = "Leader";
+    }
     await db.collection(STUDIES).doc(studyId)
-        .collection("members").doc(user.uid).set({
-            role:     "leader",
-            joinedAt: firebase.firestore.FieldValue.serverTimestamp(),
-        });
+        .collection("members").doc(user.uid).set(leaderData);
 
     // Save join code mapping
     await db.collection(JOIN_CODES).doc(joinCode).set({
@@ -78,6 +86,7 @@ async function getStudy(studyId) {
         joinCode:  d.joinCode  || "",
         createdAt: d.createdAt || null,
         createdBy: d.createdBy || "",
+        archived:  d.archived  || false,
     };
 }
 
@@ -97,8 +106,10 @@ async function getMyStudies(uid) {
                 joinCode:  data.joinCode  || "",
                 createdAt: data.createdAt || null,
                 createdBy: data.createdBy || "",
+                archived:  data.archived  || false,
             };
         })
+        .filter(s => !s.archived) // Hide archived studies from the main dashboard
         .sort((a, b) => {
             const ta = a.createdAt ? a.createdAt.toMillis() : 0;
             const tb = b.createdAt ? b.createdAt.toMillis() : 0;
@@ -129,13 +140,96 @@ async function resolveJoinCode(code) {
 /**
  * Joins the current user as a member of a study (idempotent).
  */
-async function joinStudy(studyId) {
+async function joinStudy(studyId, displayName) {
     const user    = await ensureAnonymousAuth();
     const ref     = db.collection(STUDIES).doc(studyId).collection("members").doc(user.uid);
     const snap    = await ref.get();
-    if (snap.exists) return;
-    await ref.set({
+    
+    // We update name even if member already exists (merge name updates)
+    const data = {
         role:     "member",
         joinedAt: firebase.firestore.FieldValue.serverTimestamp(),
+    };
+    if (displayName) {
+        data.displayName = displayName.trim();
+    }
+    await ref.set(data, { merge: true });
+}
+
+/**
+ * Retrieve all members (attendees) for a study, sorted by joinedAt.
+ */
+async function getStudyMembers(studyId) {
+    const snap = await db.collection(STUDIES).doc(studyId)
+        .collection("members").get();
+    return snap.docs
+        .map(d => {
+            const data = d.data();
+            return {
+                uid:       d.id,
+                role:      data.role || "member",
+                joinedAt:  data.joinedAt || null,
+                displayName: data.displayName || "",
+            };
+        })
+        .sort((a, b) => {
+            const ta = a.joinedAt ? a.joinedAt.toMillis() : 0;
+            const tb = b.joinedAt ? b.joinedAt.toMillis() : 0;
+            return ta - tb; // oldest first (chronological roster)
+        });
+}
+
+/**
+ * Update the study name.
+ */
+async function updateStudyName(studyId, newName) {
+    await db.collection(STUDIES).doc(studyId).update({
+        name: newName,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
     });
 }
+
+/**
+ * Archive a study (soft delete, hides from active dashboard).
+ */
+async function archiveStudy(studyId) {
+    await db.collection(STUDIES).doc(studyId).update({
+        archived: true,
+        archivedAt: firebase.firestore.FieldValue.serverTimestamp(),
+    });
+}
+
+/**
+ * Delete a study, its join code mapping, and all its sessions and members.
+ */
+async function deleteStudy(studyId) {
+    const study = await getStudy(studyId);
+    const joinCode = study ? study.joinCode : null;
+
+    // Fetch all subcollection docs to delete in a batch
+    const sessionsSnap = await db.collection(STUDIES).doc(studyId).collection("sessions").get();
+    const membersSnap = await db.collection(STUDIES).doc(studyId).collection("members").get();
+
+    const batch = db.batch();
+
+    // Delete sessions
+    sessionsSnap.docs.forEach(doc => {
+        batch.delete(doc.ref);
+    });
+
+    // Delete members
+    membersSnap.docs.forEach(doc => {
+        batch.delete(doc.ref);
+    });
+
+    // Delete join code mapping if it exists
+    if (joinCode) {
+        batch.delete(db.collection(JOIN_CODES).doc(joinCode));
+    }
+
+    // Delete primary study document
+    batch.delete(db.collection(STUDIES).doc(studyId));
+
+    await batch.commit();
+}
+

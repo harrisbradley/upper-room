@@ -53,6 +53,44 @@
         </p>
       </div>
 
+      <!-- Leader Dashboard (leader only) -->
+      <div id="leader-dashboard" class="card mt-16 hidden">
+        <div class="section-title" style="color:var(--accent);">Leader Dashboard</div>
+        
+        <div class="leader-tabs" style="display:flex;gap:12px;border-bottom:1px solid var(--border);padding-bottom:8px;margin-bottom:16px;">
+          <button id="tab-roster-btn" class="leader-tab-btn active" type="button">Attendee Roster</button>
+          <button id="tab-settings-btn" class="leader-tab-btn" type="button">Study Settings</button>
+        </div>
+
+        <!-- Roster Tab Content -->
+        <div id="dashboard-roster-sec">
+          <p class="text-muted mb-16">Members who have joined this study:</p>
+          <div id="roster-list" style="display:flex;flex-direction:column;gap:8px;">
+            <div class="text-muted" style="font-size:.9rem;padding:8px 0;">No members have joined yet.</div>
+          </div>
+        </div>
+
+        <!-- Settings Tab Content -->
+        <div id="dashboard-settings-sec" class="hidden">
+          <form id="edit-study-form">
+            <div class="form-group">
+              <label for="edit-study-name">Study Name</label>
+              <input type="text" id="edit-study-name" placeholder="e.g. Romans small group" autocomplete="off">
+            </div>
+            <div id="edit-study-msg" class="msg hidden"></div>
+            <button type="submit" id="save-study-btn" class="btn btn-primary btn-sm">Save Changes</button>
+          </form>
+
+          <div class="divider mt-24">Danger Zone</div>
+          <p class="text-muted mb-12">Archiving hides this study from your active list. Deleting permanently removes all sessions and member data.</p>
+          <div class="flex gap-8" style="flex-wrap:wrap;">
+            <button id="archive-study-btn" class="btn btn-outline btn-sm">Archive Study</button>
+            <button id="delete-study-btn" class="btn btn-danger btn-sm">Delete Study</button>
+          </div>
+          <div id="danger-msg" class="msg hidden"></div>
+        </div>
+      </div>
+
       <!-- Sessions -->
       <div class="mt-24">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
