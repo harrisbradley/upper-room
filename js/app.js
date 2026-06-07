@@ -10,9 +10,33 @@ function initHeader() {
     const signoutBtn= qs("#header-signout");
     const signinBtn = qs("#header-signin");
 
-    auth.onAuthStateChanged(user => {
+    auth.onAuthStateChanged(async user => {
         if (user && !user.isAnonymous) {
-            if (nameEl)    nameEl.textContent = userDisplayName(user);
+            if (nameEl) {
+                let displayName = userDisplayName(user);
+                let avatarUrl = "";
+                try {
+                    const profile = await getUserProfile(user.uid);
+                    if (profile) {
+                        if (profile.displayName) displayName = profile.displayName;
+                        avatarUrl = profile.avatarUrl || "";
+                    }
+                } catch (e) {
+                    console.error("Failed to load profile for header", e);
+                }
+                nameEl.innerHTML = `
+                    <div style="display:inline-flex;align-items:center;gap:6px;vertical-align:middle;">
+                        ${getAvatarHtml(avatarUrl, displayName, 22)}
+                        <span>${escapeHtml(displayName)}</span>
+                    </div>
+                `;
+                nameEl.style.cursor = "pointer";
+                nameEl.title = "View Profile";
+                nameEl.onclick = (e) => {
+                    e.preventDefault();
+                    location.href = "profile.html";
+                };
+            }
             if (userArea)  show(userArea);
             if (signinBtn) hide(signinBtn);
         } else {
@@ -27,6 +51,23 @@ function initHeader() {
             location.href = "index.html";
         });
     }
+}
+
+function getAvatarHtml(avatarUrl, displayName, size = 80) {
+    if (avatarUrl && (avatarUrl.startsWith("http") || avatarUrl.startsWith("data:"))) {
+        return `<img src="${escapeHtml(avatarUrl)}" alt="Avatar" style="width:${size}px;height:${size}px;border-radius:50%;object-fit:cover;display:block;">`;
+    }
+    const initial = displayName ? displayName.charAt(0).toUpperCase() : "?";
+    const colors = ["#1e3a5f", "#c8922a", "#16a34a", "#7c3aed", "#dc2626", "#0d9488"];
+    const charCodeSum = displayName ? displayName.split("").reduce((sum, char) => sum + char.charCodeAt(0), 0) : 0;
+    const color = colors[charCodeSum % colors.length];
+    
+    return `
+        <div style="width:${size}px;height:${size}px;border-radius:50%;background:${color};color:#fff;
+                    display:flex;align-items:center;justify-content:center;font-size:${size * 0.45}px;font-weight:700;line-height:1;text-transform:uppercase;">
+            ${initial}
+        </div>
+    `;
 }
 
 // ─── Shared helpers ────────────────────────────────────────────────────────
@@ -931,3 +972,277 @@ function escapeHtml(str) {
         .replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;");
 }
+
+// ─── Profile Page Controller ──────────────────────────────────────────────────
+
+async function initProfile() {
+    initHeader();
+    const loadingEl = qs("#loading");
+    const contentEl = qs("#content");
+    const errorEl   = qs("#error");
+
+    const profileForm = qs("#profile-form");
+    const profileName = qs("#profile-name");
+    const profileBirthday = qs("#profile-birthday");
+    const profileVerse = qs("#profile-verse");
+    const profileMsg = qs("#profile-msg");
+    const saveProfileBtn = qs("#save-profile-btn");
+
+    const avatarPreview = qs("#avatar-preview");
+    const avatarPresets = qs("#avatar-presets");
+    const avatarFileInput = qs("#avatar-file-input");
+    const avatarTrigger = qs("#avatar-trigger");
+
+    const passwordCard = qs("#password-card");
+    const passwordForm = qs("#password-form");
+    const profilePassword = qs("#profile-password");
+    const profilePasswordConfirm = qs("#profile-password-confirm");
+    const passwordMsg = qs("#password-msg");
+    const savePasswordBtn = qs("#save-password-btn");
+
+    const googleCard = qs("#google-info-card");
+    const studiesListEl = qs("#profile-studies-list");
+
+    // Wait for auth resolution
+    let currentUser = null;
+    try {
+        currentUser = await waitForAuth();
+    } catch (err) {
+        hide(loadingEl);
+        setError(errorEl, "Could not connect to Firebase.");
+        return;
+    }
+
+    if (!currentUser || currentUser.isAnonymous) {
+        // Redirect anonymous / signed-out users
+        location.href = "login.html?next=profile.html";
+        return;
+    }
+
+    let currentAvatarUrl = "";
+    let profileData = null;
+
+    // Load user profile
+    try {
+        profileData = await getUserProfile(currentUser.uid);
+        if (profileData) {
+            profileName.value = profileData.displayName || currentUser.displayName || "";
+            profileBirthday.value = profileData.birthday || "";
+            profileVerse.value = profileData.favoriteVerse || "";
+            currentAvatarUrl = profileData.avatarUrl || "";
+        } else {
+            profileName.value = currentUser.displayName || "";
+        }
+    } catch (err) {
+        console.error("Failed to load user profile", err);
+        setError(profileMsg, "Error loading profile details.");
+    }
+
+    // Render avatar preview
+    function renderAvatar() {
+        const nameVal = profileName.value.trim() || currentUser.email || "User";
+        avatarPreview.innerHTML = getAvatarHtml(currentAvatarUrl, nameVal, 90);
+        
+        // Highlight active preset color if it matches
+        const presets = avatarPresets.querySelectorAll(".avatar-preset-btn");
+        presets.forEach(btn => {
+            const color = btn.getAttribute("data-color");
+            if (currentAvatarUrl === color) {
+                btn.classList.add("active");
+            } else {
+                btn.classList.remove("active");
+            }
+        });
+    }
+    renderAvatar();
+
+    // Re-render avatar if display name changes (so fallback initial color matches)
+    profileName.addEventListener("input", renderAvatar);
+
+    // Setup color preset triggers
+    const presets = avatarPresets.querySelectorAll(".avatar-preset-btn");
+    presets.forEach(btn => {
+        btn.addEventListener("click", () => {
+            const color = btn.getAttribute("data-color");
+            currentAvatarUrl = color;
+            renderAvatar();
+        });
+    });
+
+    // Setup custom file upload triggers
+    if (avatarTrigger) {
+        avatarTrigger.addEventListener("click", () => {
+            avatarFileInput.click();
+        });
+    }
+
+    avatarFileInput.addEventListener("change", async () => {
+        const file = avatarFileInput.files[0];
+        if (!file) return;
+
+        // Visual feedback
+        avatarPreview.innerHTML = `
+            <div style="width:90px;height:90px;border-radius:50%;background:#e5e7eb;
+                        display:flex;align-items:center;justify-content:center;">
+                <div class="spinner"></div>
+            </div>
+        `;
+
+        try {
+            const downloadUrl = await uploadAvatar(currentUser.uid, file);
+            currentAvatarUrl = downloadUrl;
+            
+            // Save avatar immediately in Firestore
+            await saveUserProfile(currentUser.uid, { avatarUrl: downloadUrl });
+            renderAvatar();
+            setSuccess(profileMsg, "Avatar uploaded and saved successfully!");
+            
+            // Update header avatar
+            initHeader();
+        } catch (err) {
+            setError(profileMsg, err.message || "Failed to upload avatar image. Make sure Storage is enabled.");
+            renderAvatar();
+        }
+    });
+
+    // Check auth provider (Google vs Email)
+    const isGoogleUser = currentUser.providerData.some(p => p.providerId === "google.com");
+    if (isGoogleUser) {
+        show(googleCard);
+        hide(passwordCard);
+    } else {
+        hide(googleCard);
+        show(passwordCard);
+    }
+
+    // Load and render studies list
+    function renderStudies() {
+        studiesListEl.innerHTML = "";
+        const studiesMap = (profileData && profileData.studies) ? profileData.studies : {};
+        const studyIds = Object.keys(studiesMap);
+
+        if (studyIds.length === 0) {
+            studiesListEl.innerHTML = `
+                <div class="text-muted" style="font-size: .9rem; text-align: center; padding: 12px 0;">
+                    You are not a part of any studies yet.
+                </div>
+            `;
+            return;
+        }
+
+        // Sort studies by joinedAt desc
+        const sortedStudies = studyIds.map(id => ({
+            id,
+            ...studiesMap[id]
+        })).sort((a, b) => {
+            const ta = a.joinedAt ? (a.joinedAt.toMillis ? a.joinedAt.toMillis() : new Date(a.joinedAt).getTime()) : 0;
+            const tb = b.joinedAt ? (b.joinedAt.toMillis ? b.joinedAt.toMillis() : new Date(b.joinedAt).getTime()) : 0;
+            return tb - ta;
+        });
+
+        sortedStudies.forEach(s => {
+            const item = document.createElement("a");
+            item.href = `study.html?id=${s.id}`;
+            item.className = "profile-study-item";
+            
+            const roleBadge = s.role === "leader" 
+                ? `<span class="roster-role-badge leader">Leader</span>` 
+                : `<span class="roster-role-badge">Member</span>`;
+
+            const dateStr = s.joinedAt ? formatDate(s.joinedAt) : "";
+
+            item.innerHTML = `
+                <div>
+                    <strong style="color:var(--primary); font-size: .95rem;">${escapeHtml(s.name)}</strong>
+                    ${dateStr ? `<div class="text-muted" style="font-size: .75rem; margin-top: 2px;">Joined ${dateStr}</div>` : ""}
+                </div>
+                ${roleBadge}
+            `;
+            studiesListEl.appendChild(item);
+        });
+    }
+    renderStudies();
+
+    // Profile details submission
+    profileForm.addEventListener("submit", async e => {
+        e.preventDefault();
+        const displayName = profileName.value.trim();
+        const birthday = profileBirthday.value;
+        const favoriteVerse = profileVerse.value.trim();
+
+        if (!displayName) {
+            setError(profileMsg, "Display name is required.");
+            return;
+        }
+
+        hide(profileMsg);
+        saveProfileBtn.disabled = true;
+        saveProfileBtn.textContent = "Saving…";
+
+        try {
+            await saveUserProfile(currentUser.uid, {
+                displayName,
+                birthday,
+                favoriteVerse,
+                avatarUrl: currentAvatarUrl
+            });
+            setSuccess(profileMsg, "Profile details saved successfully!");
+            
+            // Re-fetch profile data to refresh list
+            profileData = await getUserProfile(currentUser.uid);
+            renderAvatar();
+            
+            // Reload header
+            initHeader();
+        } catch (err) {
+            setError(profileMsg, err.message || "Failed to save profile changes.");
+        } finally {
+            saveProfileBtn.disabled = false;
+            saveProfileBtn.textContent = "Save Profile";
+        }
+    });
+
+    // Password change submission
+    if (passwordForm) {
+        passwordForm.addEventListener("submit", async e => {
+            e.preventDefault();
+            const passwordVal = profilePassword.value;
+            const confirmVal  = profilePasswordConfirm.value;
+
+            if (passwordVal.length < 6) {
+                setError(passwordMsg, "Password must be at least 6 characters long.");
+                return;
+            }
+
+            if (passwordVal !== confirmVal) {
+                setError(passwordMsg, "Passwords do not match.");
+                return;
+            }
+
+            hide(passwordMsg);
+            savePasswordBtn.disabled = true;
+            savePasswordBtn.textContent = "Updating…";
+
+            try {
+                await updateUserPassword(passwordVal);
+                setSuccess(passwordMsg, "Password updated successfully!");
+                profilePassword.value = "";
+                profilePasswordConfirm.value = "";
+            } catch (err) {
+                if (err.code === "auth/requires-recent-login") {
+                    setError(passwordMsg, "For security reasons, please sign out and sign back in before changing your password.");
+                } else {
+                    setError(passwordMsg, friendlyAuthError(err));
+                }
+            } finally {
+                savePasswordBtn.disabled = false;
+                savePasswordBtn.textContent = "Update Password";
+            }
+        });
+    }
+
+    // Show content
+    hide(loadingEl);
+    show(contentEl);
+}
+

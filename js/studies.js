@@ -72,6 +72,11 @@ async function createStudy(studyName) {
         createdAt: firebase.firestore.FieldValue.serverTimestamp(),
     });
 
+    // Also register on user profile if logged in
+    if (!user.isAnonymous) {
+        await registerUserStudy(user.uid, studyId, studyName, "leader");
+    }
+
     return { studyId, joinCode, firstSessionId: sessionRef.id };
 }
 
@@ -154,6 +159,13 @@ async function joinStudy(studyId, displayName) {
         data.displayName = displayName.trim();
     }
     await ref.set(data, { merge: true });
+
+    // Also register on user profile if logged in
+    if (!user.isAnonymous) {
+        const study = await getStudy(studyId);
+        const studyName = study ? study.name : "Bible Study";
+        await registerUserStudy(user.uid, studyId, studyName, "member");
+    }
 }
 
 /**

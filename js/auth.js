@@ -63,3 +63,62 @@ function userDisplayName(user) {
     if (user.isAnonymous) return "";
     return user.displayName || user.email || "User";
 }
+
+// ─── User Profile Firestore Operations ───────────────────────────────────────
+
+/** Get user profile from Firestore */
+async function getUserProfile(uid) {
+    const snap = await db.collection("users").doc(uid).get();
+    if (!snap.exists) return null;
+    return snap.data();
+}
+
+/** Save/update user profile in Firestore */
+async function saveUserProfile(uid, { displayName, birthday, favoriteVerse, avatarUrl }) {
+    const data = {
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    };
+    if (displayName !== undefined) data.displayName = displayName.trim();
+    if (birthday !== undefined) data.birthday = birthday;
+    if (favoriteVerse !== undefined) data.favoriteVerse = favoriteVerse.trim();
+    if (avatarUrl !== undefined) data.avatarUrl = avatarUrl;
+
+    await db.collection("users").doc(uid).set(data, { merge: true });
+
+    // Keep Firebase Auth displayName in sync
+    const currentUser = auth.currentUser;
+    if (currentUser && displayName && currentUser.displayName !== displayName) {
+        await currentUser.updateProfile({ displayName: displayName.trim() });
+    }
+}
+
+/** Register a study association in the user's document */
+async function registerUserStudy(uid, studyId, studyName, role) {
+    await db.collection("users").doc(uid).set({
+        studies: {
+            [studyId]: {
+                name: studyName,
+                role: role,
+                joinedAt: firebase.firestore.FieldValue.serverTimestamp()
+            }
+        }
+    }, { merge: true });
+}
+
+/** Change user password */
+async function updateUserPassword(newPassword) {
+    const user = auth.currentUser;
+    if (user) {
+        await user.updatePassword(newPassword);
+    } else {
+        throw new Error("No user signed in.");
+    }
+}
+
+/** Upload avatar image to Firebase Storage */
+async function uploadAvatar(uid, file) {
+    const ref = firebase.storage().ref().child(`avatars/${uid}`);
+    const snap = await ref.put(file);
+    return await snap.ref.getDownloadURL();
+}
+

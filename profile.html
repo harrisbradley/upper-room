@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Profile — Upper Room</title>
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <link rel="stylesheet" href="css/styles.css?v=5">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="container">
+    <a href="index.html" class="header-back">← Home</a>
+    <a href="index.html" class="logo">Upper <span>Room</span></a>
+    <div class="header-spacer"></div>
+    <div id="header-user" class="header-user hidden">
+      <a id="header-user-name" href="profile.html" class="header-user-name"></a>
+      <button id="header-signout" class="btn-header">Sign out</button>
+    </div>
+    <a id="header-signin" href="login.html" class="btn-header hidden">Sign In</a>
+  </div>
+</header>
+
+<main>
+  <div class="container" style="max-width: 500px;">
+
+    <!-- Loading -->
+    <div id="loading" class="loading-block">
+      <div class="spinner spinner-lg"></div>
+      <span>Loading profile…</span>
+    </div>
+
+    <!-- Error -->
+    <div id="error" class="msg msg-error hidden" style="margin-top:24px;"></div>
+
+    <!-- Content -->
+    <div id="content" class="hidden">
+      
+      <h1 class="page-title text-center">My Profile</h1>
+      <p class="page-subtitle text-center">Manage your personal settings and studies.</p>
+
+      <!-- Profile Settings -->
+      <div class="card">
+        <div class="section-title">Profile Details</div>
+        
+        <form id="profile-form">
+          
+          <!-- Avatar Section -->
+          <div class="profile-avatar-container">
+            <div class="avatar-preview-wrapper" id="avatar-trigger">
+              <div id="avatar-preview"></div>
+              <div class="avatar-upload-btn">📷</div>
+            </div>
+            <input type="file" id="avatar-file-input" accept="image/*" class="hidden">
+            
+            <div class="text-muted" style="font-size: 0.75rem;">Click avatar to upload custom photo, or pick a color preset:</div>
+            
+            <!-- Color Presets -->
+            <div class="avatar-presets" id="avatar-presets">
+              <button type="button" class="avatar-preset-btn active" style="background:#1e3a5f;" data-color="#1e3a5f"></button>
+              <button type="button" class="avatar-preset-btn" style="background:#c8922a;" data-color="#c8922a"></button>
+              <button type="button" class="avatar-preset-btn" style="background:#16a34a;" data-color="#16a34a"></button>
+              <button type="button" class="avatar-preset-btn" style="background:#7c3aed;" data-color="#7c3aed"></button>
+              <button type="button" class="avatar-preset-btn" style="background:#dc2626;" data-color="#dc2626"></button>
+              <button type="button" class="avatar-preset-btn" style="background:#0d9488;" data-color="#0d9488"></button>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="profile-name">Display Name</label>
+            <input type="text" id="profile-name" placeholder="Your Name" autocomplete="off" required>
+          </div>
+
+          <div class="form-group">
+            <label for="profile-birthday">Birthday</label>
+            <input type="date" id="profile-birthday">
+          </div>
+
+          <div class="form-group">
+            <label for="profile-verse">Favorite Bible Verse</label>
+            <input type="text" id="profile-verse" placeholder="e.g. Romans 8:28" autocomplete="off">
+          </div>
+
+          <div id="profile-msg" class="msg hidden"></div>
+
+          <button type="submit" id="save-profile-btn" class="btn btn-primary btn-full mt-12">Save Profile</button>
+        </form>
+      </div>
+
+      <!-- Password Change (Email/Password users only) -->
+      <div id="password-card" class="card mt-16 hidden">
+        <div class="section-title">Change Password</div>
+        <form id="password-form">
+          <div class="form-group">
+            <label for="profile-password">New Password</label>
+            <input type="password" id="profile-password" placeholder="At least 6 characters" required>
+          </div>
+          <div class="form-group">
+            <label for="profile-password-confirm">Confirm Password</label>
+            <input type="password" id="profile-password-confirm" placeholder="Confirm your new password" required>
+          </div>
+          
+          <div id="password-msg" class="msg hidden"></div>
+
+          <button type="submit" id="save-password-btn" class="btn btn-outline btn-full mt-12">Update Password</button>
+        </form>
+      </div>
+
+      <!-- Google Credentials Info (Google users only) -->
+      <div id="google-info-card" class="card mt-16 hidden">
+        <div class="section-title">Security</div>
+        <p class="text-muted">You are signed in with Google. Password management is handled through your Google Account settings.</p>
+      </div>
+
+      <!-- User Studies -->
+      <div class="card mt-16">
+        <div class="section-title">My Studies</div>
+        <div id="profile-studies-list" class="profile-studies-list">
+          <div class="text-muted" style="font-size: .9rem; text-align: center; padding: 12px 0;">Loading studies...</div>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+
+  </div>
+</main>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+
+<!-- Scripts -->
+<script src="js/firebase-config.js?v=5"></script>
+<script src="js/auth.js?v=5"></script>
+<script src="js/app.js?v=5"></script>
+<script>initProfile();</script>
+
+</body>
+</html>
