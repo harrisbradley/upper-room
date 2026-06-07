@@ -152,6 +152,7 @@ async function initHome() {
         e.preventDefault();
         const name = studyNameEl.value.trim();
         if (!name) { setError(msgEl, "Please enter a study name."); return; }
+        if (name.length > 100) { setError(msgEl, "Study name cannot be longer than 100 characters."); return; }
         hide(msgEl);
         submitBtn.disabled = true;
         submitBtn.textContent = "Creating…";
@@ -170,6 +171,7 @@ async function initHome() {
         e.preventDefault();
         const code = joinCode.value.trim().toUpperCase();
         if (!code) { setError(joinMsgEl, "Please enter a join code."); return; }
+        if (!/^[A-Z0-9]{6}$/.test(code)) { setError(joinMsgEl, "Join code must be exactly 6 alphanumeric characters."); return; }
         hide(joinMsgEl);
         location.href = `join.html?code=${code}`;
     });
@@ -302,6 +304,8 @@ async function initStudy() {
             const passage   = newPassageEl.value.trim();
             const questions = parseLines(newQuestionsEl.value);
             if (!passage) { setError(newFormMsg, "Please enter a scripture passage."); return; }
+            if (passage.length > 100) { setError(newFormMsg, "Passage reference cannot be longer than 100 characters."); return; }
+            if (questions.length === 0) { setError(newFormMsg, "Please enter at least one discussion question."); return; }
             hide(newFormMsg);
             submitNewBtn.disabled = true;
             submitNewBtn.textContent = "Creating…";
@@ -488,6 +492,9 @@ async function initSession() {
             const passage   = editPassage.value.trim();
             const questions = parseLines(editQuestions.value);
             const notes     = editNotes ? editNotes.value.trim() : "";
+            if (!passage) { setError(editMsg, "Please enter a scripture passage."); return; }
+            if (passage.length > 100) { setError(editMsg, "Passage reference cannot be longer than 100 characters."); return; }
+            if (questions.length === 0) { setError(editMsg, "Please enter at least one discussion question."); return; }
             hide(editMsg);
             saveEditBtn.disabled = true;
             saveEditBtn.textContent = "Saving…";
@@ -530,6 +537,7 @@ async function initSession() {
             const keyTakeaways    = parseLines(recapTakeaways  ? recapTakeaways.value  : "");
             const prayerIntentions= parseLines(recapPrayers    ? recapPrayers.value    : "");
             if (!summary) { setError(recapMsg, "Please enter a summary."); return; }
+            if (summary.length > 500) { setError(recapMsg, "Summary cannot be longer than 500 characters."); return; }
             hide(recapMsg);
             saveRecapBtn.disabled = true;
             saveRecapBtn.textContent = "Posting…";
@@ -581,9 +589,17 @@ async function initJoin() {
             e.preventDefault();
             const code = codeInput.value.trim().toUpperCase();
             if (!code) { setError(codeMsg, "Please enter a join code."); return; }
+            if (!/^[A-Z0-9]{6}$/.test(code)) { setError(codeMsg, "Join code must be exactly 6 alphanumeric characters."); return; }
             hide(codeMsg);
             location.href = `join.html?code=${code}`;
         });
+        return;
+    }
+
+    // Validate join code parameter format before Firestore query
+    if (codeParam && !/^[A-Z0-9]{6}$/.test(codeParam.trim().toUpperCase())) {
+        hide(loadingEl);
+        setError(errorEl, `"${codeParam}" is not a valid join code. It must be exactly 6 alphanumeric characters.`);
         return;
     }
 
