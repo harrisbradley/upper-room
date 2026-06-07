@@ -325,6 +325,132 @@ async function initStudy() {
         });
     }
 
+    // Leader Dashboard Logic
+    if (isLeader) {
+        const dashboardEl     = qs("#leader-dashboard");
+        const tabRosterBtn    = qs("#tab-roster-btn");
+        const tabSettingsBtn  = qs("#tab-settings-btn");
+        const rosterSec       = qs("#dashboard-roster-sec");
+        const settingsSec     = qs("#dashboard-settings-sec");
+        const rosterList      = qs("#roster-list");
+        const editStudyForm   = qs("#edit-study-form");
+        const editStudyNameInput = qs("#edit-study-name");
+        const editStudyMsg    = qs("#edit-study-msg");
+        const saveStudyBtn    = qs("#save-study-btn");
+        
+        const archiveBtn      = qs("#archive-study-btn");
+        const deleteBtn       = qs("#delete-study-btn");
+        const dangerMsg       = qs("#danger-msg");
+
+        show(dashboardEl);
+        if (editStudyNameInput) editStudyNameInput.value = study.name;
+
+        // Toggle Roster Tab
+        tabRosterBtn.addEventListener("click", () => {
+            tabRosterBtn.classList.add("active");
+            tabSettingsBtn.classList.remove("active");
+            show(rosterSec);
+            hide(settingsSec);
+        });
+
+        // Toggle Settings Tab
+        tabSettingsBtn.addEventListener("click", () => {
+            tabSettingsBtn.classList.add("active");
+            tabRosterBtn.classList.remove("active");
+            show(settingsSec);
+            hide(rosterSec);
+        });
+
+        // Load Roster
+        async function loadRoster() {
+            rosterList.innerHTML = `<div class="loading-block" style="padding:10px;"><div class="spinner"></div></div>`;
+            try {
+                const members = await getStudyMembers(studyId);
+                rosterList.innerHTML = "";
+                if (members.length === 0) {
+                    rosterList.innerHTML = `<div class="text-muted" style="font-size:.9rem;padding:8px 0;">No members have joined yet.</div>`;
+                } else {
+                    members.forEach(m => {
+                        const li = document.createElement("div");
+                        li.className = "roster-list-item";
+                        const joinedStr = m.joinedAt ? formatDate(m.joinedAt) : "Unknown Date";
+                        const nameEscaped = escapeHtml(m.displayName || "Anonymous Member");
+                        const roleLabel = m.role === "leader" ? `<span class="roster-role-badge leader">Leader</span>` : `<span class="roster-role-badge">Member</span>`;
+                        li.innerHTML = `
+                            <div>
+                                <strong style="color:var(--primary);">${nameEscaped}</strong>
+                                <div class="text-muted" style="font-size:.75rem;margin-top:2px;">Joined ${joinedStr}</div>
+                            </div>
+                            ${roleLabel}
+                        `;
+                        rosterList.appendChild(li);
+                    });
+                }
+            } catch (err) {
+                rosterList.innerHTML = `<div class="msg msg-error">Failed to load roster.</div>`;
+                console.error(err);
+            }
+        }
+
+        await loadRoster();
+
+        // Edit Study Name Submission
+        editStudyForm.addEventListener("submit", async e => {
+            e.preventDefault();
+            const newName = editStudyNameInput.value.trim();
+            if (!newName) { setError(editStudyMsg, "Please enter a study name."); return; }
+            if (newName.length > 100) { setError(editStudyMsg, "Study name cannot be longer than 100 characters."); return; }
+            hide(editStudyMsg);
+            saveStudyBtn.disabled = true;
+            saveStudyBtn.textContent = "Saving…";
+            try {
+                await updateStudyName(studyId, newName);
+                setSuccess(editStudyMsg, "Study name updated successfully!");
+                setText(titleEl, newName);
+                document.title = newName + " — Upper Room";
+                study.name = newName;
+            } catch (err) {
+                setError(editStudyMsg, err.message || "Failed to update study name.");
+            } finally {
+                saveStudyBtn.disabled = false;
+                saveStudyBtn.textContent = "Save Changes";
+            }
+        });
+
+        // Archive Study
+        archiveBtn.addEventListener("click", async () => {
+            if (!confirm("Are you sure you want to archive this study? It will be hidden from your main list.")) return;
+            archiveBtn.disabled = true;
+            archiveBtn.textContent = "Archiving…";
+            hide(dangerMsg);
+            try {
+                await archiveStudy(studyId);
+                location.href = "index.html";
+            } catch (err) {
+                setError(dangerMsg, err.message || "Failed to archive study.");
+                archiveBtn.disabled = false;
+                archiveBtn.textContent = "Archive Study";
+            }
+        });
+
+        // Delete Study
+        deleteBtn.addEventListener("click", async () => {
+            const doubleCheck = confirm("WARNING: Deleting this study will permanently remove all sessions, attendee logs, and join codes. This cannot be undone.\n\nAre you sure you want to permanently delete this study?");
+            if (!doubleCheck) return;
+            deleteBtn.disabled = true;
+            deleteBtn.textContent = "Deleting…";
+            hide(dangerMsg);
+            try {
+                await deleteStudy(studyId);
+                location.href = "index.html";
+            } catch (err) {
+                setError(dangerMsg, err.message || "Failed to delete study.");
+                deleteBtn.disabled = false;
+                deleteBtn.textContent = "Delete Study";
+            }
+        });
+    }
+
     // Show main content
     hide(loadingEl);
     show(contentEl);
@@ -642,10 +768,17 @@ async function initJoin() {
     // Join button
     if (joinBtn) {
         joinBtn.addEventListener("click", async () => {
+            const joinNameEl = qs("#join-name");
+            const displayName = joinNameEl ? joinNameEl.value.trim() : "";
+            if (!displayName) {
+                setError(joinMsg, "Please enter your name.");
+                return;
+            }
+            hide(joinMsg);
             joinBtn.disabled = true;
             joinBtn.textContent = "Joining…";
             try {
-                await joinStudy(resolvedStudyId);
+                await joinStudy(resolvedStudyId, displayName);
                 location.href = `study.html?id=${resolvedStudyId}`;
             } catch (err) {
                 setError(joinMsg, err.message || "Failed to join study.");

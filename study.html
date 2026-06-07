@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Study — Upper Room</title>
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-  <link rel="stylesheet" href="css/styles.css?v=4">
+  <link rel="stylesheet" href="css/styles.css?v=5">
 </head>
 <body>
 
@@ -53,6 +53,44 @@
         </p>
       </div>
 
+      <!-- Leader Dashboard (leader only) -->
+      <div id="leader-dashboard" class="card mt-16 hidden">
+        <div class="section-title" style="color:var(--accent);">Leader Dashboard</div>
+        
+        <div class="leader-tabs" style="display:flex;gap:12px;border-bottom:1px solid var(--border);padding-bottom:8px;margin-bottom:16px;">
+          <button id="tab-roster-btn" class="leader-tab-btn active" type="button">Attendee Roster</button>
+          <button id="tab-settings-btn" class="leader-tab-btn" type="button">Study Settings</button>
+        </div>
+
+        <!-- Roster Tab Content -->
+        <div id="dashboard-roster-sec">
+          <p class="text-muted mb-16">Members who have joined this study:</p>
+          <div id="roster-list" style="display:flex;flex-direction:column;gap:8px;">
+            <div class="text-muted" style="font-size:.9rem;padding:8px 0;">No members have joined yet.</div>
+          </div>
+        </div>
+
+        <!-- Settings Tab Content -->
+        <div id="dashboard-settings-sec" class="hidden">
+          <form id="edit-study-form">
+            <div class="form-group">
+              <label for="edit-study-name">Study Name</label>
+              <input type="text" id="edit-study-name" placeholder="e.g. Romans small group" autocomplete="off">
+            </div>
+            <div id="edit-study-msg" class="msg hidden"></div>
+            <button type="submit" id="save-study-btn" class="btn btn-primary btn-sm">Save Changes</button>
+          </form>
+
+          <div class="divider mt-24">Danger Zone</div>
+          <p class="text-muted mb-12">Archiving hides this study from your active list. Deleting permanently removes all sessions and member data.</p>
+          <div class="flex gap-8" style="flex-wrap:wrap;">
+            <button id="archive-study-btn" class="btn btn-outline btn-sm">Archive Study</button>
+            <button id="delete-study-btn" class="btn btn-danger btn-sm">Delete Study</button>
+          </div>
+          <div id="danger-msg" class="msg hidden"></div>
+        </div>
+      </div>
+
       <!-- Sessions -->
       <div class="mt-24">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
@@ -93,11 +131,11 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
-<script src="js/firebase-config.js?v=4"></script>
-<script src="js/auth.js?v=4"></script>
-<script src="js/studies.js?v=4"></script>
-<script src="js/sessions.js?v=4"></script>
-<script src="js/app.js?v=4"></script>
+<script src="js/firebase-config.js?v=5"></script>
+<script src="js/auth.js?v=5"></script>
+<script src="js/studies.js?v=5"></script>
+<script src="js/sessions.js?v=5"></script>
+<script src="js/app.js?v=5"></script>
 <script>initStudy();</script>
 
 </body>

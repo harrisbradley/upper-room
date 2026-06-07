@@ -531,3 +531,58 @@ textarea { resize: vertical; min-height: 80px; }
   .page-title { font-size: 1.25rem; }
   .join-code-value { font-size: 1.15rem; }
 }
+
+/* ── Leader Dashboard Styles ─────────────────────────────────── */
+.leader-tab-btn {
+  border: none;
+  background: transparent;
+  font-family: inherit;
+  font-size: .85rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  padding: 6px 12px;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all .15s;
+}
+.leader-tab-btn:hover {
+  color: var(--text);
+}
+.leader-tab-btn.active {
+  color: var(--primary);
+  border-bottom: 2px solid var(--primary);
+}
+
+.btn-danger {
+  background: var(--error);
+  color: #fff;
+}
+.btn-danger:hover:not(:disabled) {
+  background: #991b1b;
+  color: #fff;
+}
+
+.roster-list-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: var(--bg);
+  border-radius: var(--radius);
+  font-size: .9rem;
+}
+.roster-role-badge {
+  font-size: .7rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 99px;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  background: var(--border);
+  color: var(--text-muted);
+}
+.roster-role-badge.leader {
+  background: #fef3c7;
+  color: #d97706;
+}
+

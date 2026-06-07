@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Join a Study — Upper Room</title>
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-  <link rel="stylesheet" href="css/styles.css?v=4">
+  <link rel="stylesheet" href="css/styles.css?v=5">
 </head>
 <body>
 
@@ -64,6 +64,10 @@
 
       <div class="card text-center">
         <div style="font-size:1.4rem;font-weight:700;color:var(--primary);margin-bottom:8px;" id="preview-study-name"></div>
+        <div class="form-group" style="text-align: left; margin-top: 16px;">
+          <label for="join-name">Your Name</label>
+          <input type="text" id="join-name" placeholder="e.g. Jane Doe" autocomplete="off">
+        </div>
         <div id="join-msg" class="msg hidden"></div>
         <button id="join-btn" class="btn btn-accent btn-full btn-lg mt-16">Join This Study →</button>
         <div class="mt-12">
@@ -80,10 +84,10 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
-<script src="js/firebase-config.js?v=4"></script>
-<script src="js/auth.js?v=4"></script>
-<script src="js/studies.js?v=4"></script>
-<script src="js/app.js?v=4"></script>
+<script src="js/firebase-config.js?v=5"></script>
+<script src="js/auth.js?v=5"></script>
+<script src="js/studies.js?v=5"></script>
+<script src="js/app.js?v=5"></script>
 <script>initJoin();</script>
 
 </body>
