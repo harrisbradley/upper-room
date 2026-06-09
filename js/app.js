@@ -471,7 +471,7 @@ async function initStudy() {
                         if (m.role === "leader") {
                             roleLabel = `<span class="roster-role-badge leader">Leader</span>`;
                             if (isCreator && m.uid !== study.createdBy) {
-                                actionBtn = `<button class="btn btn-xs btn-outline revoke-leader-btn" data-uid="${m.uid}" data-name="${nameEscaped}" style="margin-left: 10px; padding: 2px 6px; font-size: 0.75rem; color: #dc2626; border-color: #dc2626;">Revoke Co-Leader</button>`;
+                                actionBtn = `<button class="btn btn-xs btn-outline revoke-leader-btn" data-uid="${m.uid}" data-name="${nameEscaped}" style="margin-left: 10px; padding: 2px 6px; font-size: 0.75rem; color: #dc2626; border-color: #dc2626;">Remove Co-Leader</button>`;
                             }
                         } else {
                             roleLabel = `<span class="roster-role-badge">Member</span>`;
@@ -515,21 +515,21 @@ async function initStudy() {
                         });
                     });
 
-                    // Bind click listeners to "Revoke Co-Leader" buttons
+                    // Bind click listeners to "Remove Co-Leader" buttons
                     rosterList.querySelectorAll(".revoke-leader-btn").forEach(btn => {
                         btn.addEventListener("click", async () => {
                             const memberUid = btn.getAttribute("data-uid");
                             const memberName = btn.getAttribute("data-name");
-                            if (confirm(`Are you sure you want to revoke "${memberName}"'s co-leader status?`)) {
+                            if (confirm(`Are you sure you want to remove "${memberName}" as a co-leader?`)) {
                                 btn.disabled = true;
                                 btn.textContent = "Updating...";
                                 try {
                                     await demoteToMember(studyId, memberUid);
                                     await loadRoster();
                                 } catch (err) {
-                                    alert("Failed to revoke leader status: " + err.message);
+                                    alert("Failed to remove leader status: " + err.message);
                                     btn.disabled = false;
-                                    btn.textContent = "Revoke Co-Leader";
+                                    btn.textContent = "Remove Co-Leader";
                                 }
                             }
                         });
