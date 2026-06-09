@@ -82,6 +82,29 @@ function show(el)   { if (el) el.classList.remove("hidden"); }
 function hide(el)   { if (el) el.classList.add("hidden"); }
 function setText(el, txt) { if (el) el.textContent = txt; }
 
+function copyToClipboard(text) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        return navigator.clipboard.writeText(text);
+    } else {
+        const textarea = document.createElement("textarea");
+        textarea.value = text;
+        textarea.style.position = "fixed";
+        textarea.style.top = "0";
+        textarea.style.left = "0";
+        textarea.style.opacity = "0";
+        document.body.appendChild(textarea);
+        textarea.select();
+        try {
+            document.execCommand("copy");
+            document.body.removeChild(textarea);
+            return Promise.resolve();
+        } catch (err) {
+            document.body.removeChild(textarea);
+            return Promise.reject(err);
+        }
+    }
+}
+
 function setError(el, msg) {
     if (!el) return;
     el.className = "msg msg-error";
@@ -236,6 +259,7 @@ async function initStudy() {
     const errorEl       = qs("#error");
     const joinCodeEl    = qs("#join-code-value");
     const copyBtn       = qs("#copy-code-btn");
+    const copyLinkBtn   = qs("#copy-link-btn");
     const sessionList   = qs("#session-list");
     const newSessionBtn = qs("#new-session-btn");
     const newSessionForm = qs("#new-session-form");
@@ -288,10 +312,27 @@ async function initStudy() {
     // Copy join code
     if (copyBtn) {
         copyBtn.addEventListener("click", () => {
-            navigator.clipboard.writeText(study.joinCode).then(() => {
+            copyToClipboard(study.joinCode).then(() => {
                 copyBtn.textContent = "Copied!";
                 setTimeout(() => { copyBtn.textContent = "Copy"; }, 1500);
+            }).catch(err => {
+                console.error("Failed to copy code: ", err);
             });
+        });
+    }
+
+    // Copy share link
+    if (copyLinkBtn) {
+        copyLinkBtn.addEventListener("click", () => {
+            const shareUrl = shareLinkEl ? shareLinkEl.textContent : "";
+            if (shareUrl) {
+                copyToClipboard(shareUrl).then(() => {
+                    copyLinkBtn.textContent = "Copied!";
+                    setTimeout(() => { copyLinkBtn.textContent = "Copy Link"; }, 1500);
+                }).catch(err => {
+                    console.error("Failed to copy link: ", err);
+                });
+            }
         });
     }
 
