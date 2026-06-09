@@ -143,8 +143,19 @@ async function getMyStudies(uid) {
 async function getMyRole(studyId, uid) {
     const snap = await db.collection(STUDIES).doc(studyId)
         .collection("members").doc(uid).get();
-    if (!snap.exists) return null;
-    return snap.data().role || null;
+    if (snap.exists) {
+        return snap.data().role || null;
+    }
+    // Fallback: if they created the study, they are a leader
+    try {
+        const study = await getStudy(studyId);
+        if (study && study.createdBy === uid) {
+            return "leader";
+        }
+    } catch (e) {
+        console.error("Failed to load study for role fallback check", e);
+    }
+    return null;
 }
 
 /**
