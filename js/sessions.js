@@ -41,17 +41,26 @@ async function createSession(studyId, passageRef, questions) {
 }
 
 /**
- * Updates the editable fields of a session (scripture, questions, notes).
+ * Updates the editable fields of a session (scripture, questions, notes, completion).
  */
-async function updateSession(studyId, sessionId, { passageRef, questions, leaderNotes }) {
+async function updateSession(studyId, sessionId, { passageRef, questions, leaderNotes, completed }) {
+    const updateData = {
+        title:              passageRef || "Session",
+        "passage.reference": passageRef || "",
+        "agenda.questions":  questions  || [],
+        "agenda.leaderNotes": leaderNotes || "",
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+    };
+    if (completed !== undefined) {
+        updateData.completed = !!completed;
+        if (completed) {
+            updateData.completedAt = firebase.firestore.FieldValue.serverTimestamp();
+        } else {
+            updateData.completedAt = null;
+        }
+    }
     await db.collection("studies").doc(studyId)
-        .collection("sessions").doc(sessionId).update({
-            title:              passageRef || "Session",
-            "passage.reference": passageRef || "",
-            "agenda.questions":  questions  || [],
-            "agenda.leaderNotes": leaderNotes || "",
-            updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
-        });
+        .collection("sessions").doc(sessionId).update(updateData);
 }
 
 /**

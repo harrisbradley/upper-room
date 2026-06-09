@@ -350,6 +350,15 @@ async function initStudy() {
                 const passageRef  = (s.passage && s.passage.reference) ? s.passage.reference : s.title || "Session";
                 const meta        = s.scheduledAt ? formatDate(s.scheduledAt) : "";
 
+                const badges = [];
+                if (s.completed) {
+                    badges.push(`<span class="session-badge badge-completed">✓ Completed</span>`);
+                }
+                if (hasRecap) {
+                    badges.push(`<span class="session-badge badge-recap">Recap posted</span>`);
+                }
+                const badgesHtml = badges.length ? `<div style="display:flex;gap:6px;align-items:center;flex-shrink:0;">${badges.join("")}</div>` : "";
+
                 const a = document.createElement("a");
                 a.href = `session.html?studyId=${studyId}&sessionId=${s.id}`;
                 a.className = "session-item";
@@ -359,7 +368,7 @@ async function initStudy() {
                         <div class="session-item-title">${escapeHtml(passageRef)}</div>
                         ${meta ? `<div class="session-item-meta">${meta}</div>` : ""}
                     </div>
-                    ${hasRecap ? `<span class="session-badge badge-recap">Recap posted</span>` : ""}`;
+                    ${badgesHtml}`;
                 sessionList.appendChild(a);
             });
         }
@@ -629,6 +638,7 @@ async function initSession() {
     const editPassage   = qs("#edit-passage");
     const editQuestions = qs("#edit-questions");
     const editNotes     = qs("#edit-leader-notes");
+    const editCompleted = qs("#edit-completed");
     const cancelEditBtn = qs("#cancel-edit");
     const saveEditBtn   = qs("#save-edit");
     const editMsg       = qs("#edit-msg");
@@ -714,6 +724,7 @@ async function initSession() {
         if (editPassage)   editPassage.value   = passageRef;
         if (editQuestions) editQuestions.value = questions.join("\n");
         if (editNotes)     editNotes.value     = notes;
+        if (editCompleted) editCompleted.checked = !!session.completed;
 
         // Render recap
         renderRecap();
@@ -767,6 +778,7 @@ async function initSession() {
             const passage   = editPassage.value.trim();
             const questions = parseLines(editQuestions.value);
             const notes     = editNotes ? editNotes.value.trim() : "";
+            const completed = editCompleted ? editCompleted.checked : false;
             if (!passage) { setError(editMsg, "Please enter a scripture passage."); return; }
             if (passage.length > 100) { setError(editMsg, "Passage reference cannot be longer than 100 characters."); return; }
             if (questions.length === 0) { setError(editMsg, "Please enter at least one discussion question."); return; }
@@ -774,7 +786,7 @@ async function initSession() {
             saveEditBtn.disabled = true;
             saveEditBtn.textContent = "Saving…";
             try {
-                await updateSession(studyId, sessionId, { passageRef: passage, questions, leaderNotes: notes });
+                await updateSession(studyId, sessionId, { passageRef: passage, questions, leaderNotes: notes, completed });
                 session = await getSession(studyId, sessionId);
                 renderSession();
                 show(editBtn);
