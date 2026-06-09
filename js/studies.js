@@ -1,6 +1,26 @@
 // js/studies.js
 // Firestore operations for studies
 
+import { db } from "./firebase-config.js";
+import { 
+    ensureAnonymousAuth, 
+    getUserProfile, 
+    registerUserStudy 
+} from "./auth.js";
+import { 
+    doc, 
+    collection, 
+    addDoc, 
+    getDoc, 
+    setDoc, 
+    getDocs, 
+    updateDoc, 
+    query, 
+    where, 
+    writeBatch, 
+    serverTimestamp 
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
 const STUDIES    = "studies";
 const JOIN_CODES = "joinCodes";
 
@@ -20,36 +40,35 @@ function randomJoinCode() {
  *   studies/{studyId}/sessions/{sessionId}  — first session
  *   joinCodes/{code}                        — join code mapping
  */
-async function createStudy(studyName) {
+export async function createStudy(studyName) {
     const user = await ensureAnonymousAuth();
 
     // Generate a unique join code
     let joinCode = randomJoinCode();
-    while ((await db.collection(JOIN_CODES).doc(joinCode).get()).exists) {
+    while ((await getDoc(doc(db, JOIN_CODES, joinCode))).exists()) {
         joinCode = randomJoinCode();
     }
 
     // Create study document
-    const studyRef = db.collection(STUDIES).doc();
+    const studyRef = doc(collection(db, STUDIES));
     const studyId  = studyRef.id;
 
-    await studyRef.set({
+    await setDoc(studyRef, {
         name:      studyName,
         joinCode,
-        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        createdAt: serverTimestamp(),
         createdBy: user.uid,
     });
 
     // Create first session
-    const sessionRef = await db.collection(STUDIES).doc(studyId)
-        .collection("sessions").add({
-            title:       "Session 1",
-            scheduledAt: null,
-            order:       0,
-            passage:     { reference: "" },
-            agenda:      { questions: [], leaderNotes: "" },
-            createdAt:   firebase.firestore.FieldValue.serverTimestamp(),
-        });
+    const sessionRef = await addDoc(collection(db, STUDIES, studyId, "sessions"), {
+        title:       "Session 1",
+        scheduledAt: null,
+        order:       0,
+        passage:     { reference: "" },
+        agenda:      { questions: [], leaderNotes: "" },
+        createdAt:   serverTimestamp(),
+    });
 
     // Record leader membership
     let displayName = "Leader";
@@ -75,16 +94,15 @@ async function createStudy(studyName) {
 
     const leaderData = {
         role:        "leader",
-        joinedAt:    firebase.firestore.FieldValue.serverTimestamp(),
+        joinedAt:    serverTimestamp(),
         displayName: displayName,
     };
-    await db.collection(STUDIES).doc(studyId)
-        .collection("members").doc(user.uid).set(leaderData);
+    await setDoc(doc(db, STUDIES, studyId, "members", user.uid), leaderData);
 
     // Save join code mapping
-    await db.collection(JOIN_CODES).doc(joinCode).set({
+    await setDoc(doc(db, JOIN_CODES, joinCode), {
         studyId,
-        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        createdAt: serverTimestamp(),
     });
 
     // Also register on user profile if logged in
@@ -96,9 +114,9 @@ async function createStudy(studyName) {
 }
 
 /** Load a single study by ID. Returns null if not found. */
-async function getStudy(studyId) {
-    const snap = await db.collection(STUDIES).doc(studyId).get();
-    if (!snap.exists) return null;
+export async function getStudy(studyId) {
+    const snap = await getDoc(doc(db, STUDIES, studyId));
+    if (!snap.exists()) return null;
     const d = snap.data();
     return {
         id:        snap.id,
@@ -111,12 +129,11 @@ async function getStudy(studyId) {
 }
 
 /** Load all studies created by the given uid. */
-async function getMyStudies(uid) {
+export async function getMyStudies(uid) {
     // No orderBy here — avoids requiring a composite Firestore index.
     // Sort by createdAt client-side instead (newest first).
-    const snap = await db.collection(STUDIES)
-        .where("createdBy", "==", uid)
-        .get();
+    const q = query(collection(db, STUDIES), where("createdBy", "==", uid));
+    const snap = await getDocs(q);
     return snap.docs
         .map(d => {
             const data = d.data();
@@ -140,10 +157,9 @@ async function getMyStudies(uid) {
 /**
  * Returns the current user's role in a study: "leader", "member", or null.
  */
-async function getMyRole(studyId, uid) {
-    const snap = await db.collection(STUDIES).doc(studyId)
-        .collection("members").doc(uid).get();
-    if (snap.exists) {
+export async function getMyRole(studyId, uid) {
+    const snap = await getDoc(doc(db, STUDIES, studyId, "members", uid));
+    if (snap.exists()) {
         return snap.data().role || null;
     }
     // Fallback: if they created the study, they are a leader
@@ -161,30 +177,29 @@ async function getMyRole(studyId, uid) {
 /**
  * Resolves a join code string to a studyId. Returns null if not found.
  */
-async function resolveJoinCode(code) {
+export async function resolveJoinCode(code) {
     const normalized = code.toUpperCase().trim();
-    const snap = await db.collection(JOIN_CODES).doc(normalized).get();
-    if (!snap.exists) return null;
+    const snap = await getDoc(doc(db, JOIN_CODES, normalized));
+    if (!snap.exists()) return null;
     return snap.data().studyId || null;
 }
 
 /**
  * Joins the current user as a member of a study (idempotent).
  */
-async function joinStudy(studyId, displayName) {
+export async function joinStudy(studyId, displayName) {
     const user    = await ensureAnonymousAuth();
-    const ref     = db.collection(STUDIES).doc(studyId).collection("members").doc(user.uid);
-    const snap    = await ref.get();
+    const ref     = doc(db, STUDIES, studyId, "members", user.uid);
     
     // We update name even if member already exists (merge name updates)
     const data = {
         role:     "member",
-        joinedAt: firebase.firestore.FieldValue.serverTimestamp(),
+        joinedAt: serverTimestamp(),
     };
     if (displayName) {
         data.displayName = displayName.trim();
     }
-    await ref.set(data, { merge: true });
+    await setDoc(ref, data, { merge: true });
 
     // Also register on user profile if logged in
     if (!user.isAnonymous) {
@@ -197,9 +212,8 @@ async function joinStudy(studyId, displayName) {
 /**
  * Retrieve all members (attendees) for a study, sorted by joinedAt.
  */
-async function getStudyMembers(studyId) {
-    const snap = await db.collection(STUDIES).doc(studyId)
-        .collection("members").get();
+export async function getStudyMembers(studyId) {
+    const snap = await getDocs(collection(db, STUDIES, studyId, "members"));
     return snap.docs
         .map(d => {
             const data = d.data();
@@ -220,35 +234,35 @@ async function getStudyMembers(studyId) {
 /**
  * Update the study name.
  */
-async function updateStudyName(studyId, newName) {
-    await db.collection(STUDIES).doc(studyId).update({
+export async function updateStudyName(studyId, newName) {
+    await updateDoc(doc(db, STUDIES, studyId), {
         name: newName,
-        updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+        updatedAt: serverTimestamp(),
     });
 }
 
 /**
  * Archive a study (soft delete, hides from active dashboard).
  */
-async function archiveStudy(studyId) {
-    await db.collection(STUDIES).doc(studyId).update({
+export async function archiveStudy(studyId) {
+    await updateDoc(doc(db, STUDIES, studyId), {
         archived: true,
-        archivedAt: firebase.firestore.FieldValue.serverTimestamp(),
+        archivedAt: serverTimestamp(),
     });
 }
 
 /**
  * Delete a study, its join code mapping, and all its sessions and members.
  */
-async function deleteStudy(studyId) {
+export async function deleteStudy(studyId) {
     const study = await getStudy(studyId);
     const joinCode = study ? study.joinCode : null;
 
     // Fetch all subcollection docs to delete in a batch
-    const sessionsSnap = await db.collection(STUDIES).doc(studyId).collection("sessions").get();
-    const membersSnap = await db.collection(STUDIES).doc(studyId).collection("members").get();
+    const sessionsSnap = await getDocs(collection(db, STUDIES, studyId, "sessions"));
+    const membersSnap = await getDocs(collection(db, STUDIES, studyId, "members"));
 
-    const batch = db.batch();
+    const batch = writeBatch(db);
 
     // Delete sessions
     sessionsSnap.docs.forEach(doc => {
@@ -262,11 +276,11 @@ async function deleteStudy(studyId) {
 
     // Delete join code mapping if it exists
     if (joinCode) {
-        batch.delete(db.collection(JOIN_CODES).doc(joinCode));
+        batch.delete(doc(db, JOIN_CODES, joinCode));
     }
 
     // Delete primary study document
-    batch.delete(db.collection(STUDIES).doc(studyId));
+    batch.delete(doc(db, STUDIES, studyId));
 
     await batch.commit();
 }
@@ -274,18 +288,18 @@ async function deleteStudy(studyId) {
 /**
  * Promotes a member to leader role (co-leader).
  */
-async function promoteToLeader(studyId, memberUid) {
+export async function promoteToLeader(studyId, memberUid) {
     // 1. Update in the study members subcollection
-    const memberRef = db.collection(STUDIES).doc(studyId).collection("members").doc(memberUid);
-    await memberRef.update({ role: "leader" });
+    const memberRef = doc(db, STUDIES, studyId, "members", memberUid);
+    await updateDoc(memberRef, { role: "leader" });
 
     // 2. Also update in the user's profile document if it exists
-    const userRef = db.collection("users").doc(memberUid);
-    const userSnap = await userRef.get();
-    if (userSnap.exists) {
+    const userRef = doc(db, "users", memberUid);
+    const userSnap = await getDoc(userRef);
+    if (userSnap.exists()) {
         const data = userSnap.data();
         if (data.studies && data.studies[studyId]) {
-            await userRef.update({
+            await updateDoc(userRef, {
                 [`studies.${studyId}.role`]: "leader"
             });
         }
@@ -295,21 +309,20 @@ async function promoteToLeader(studyId, memberUid) {
 /**
  * Demotes a leader back to member role.
  */
-async function demoteToMember(studyId, memberUid) {
+export async function demoteToMember(studyId, memberUid) {
     // 1. Update in the study members subcollection
-    const memberRef = db.collection(STUDIES).doc(studyId).collection("members").doc(memberUid);
-    await memberRef.update({ role: "member" });
+    const memberRef = doc(db, STUDIES, studyId, "members", memberUid);
+    await updateDoc(memberRef, { role: "member" });
 
     // 2. Also update in the user's profile document if it exists
-    const userRef = db.collection("users").doc(memberUid);
-    const userSnap = await userRef.get();
-    if (userSnap.exists) {
+    const userRef = doc(db, "users", memberUid);
+    const userSnap = await getDoc(userRef);
+    if (userSnap.exists()) {
         const data = userSnap.data();
         if (data.studies && data.studies[studyId]) {
-            await userRef.update({
+            await updateDoc(userRef, {
                 [`studies.${studyId}.role`]: "member"
             });
         }
     }
 }
-

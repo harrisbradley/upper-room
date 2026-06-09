@@ -1,40 +1,59 @@
 // js/auth.js
 // Authentication helpers — email/password, Google, anonymous, sign-out
 
+import { auth, db } from "./firebase-config.js";
+import { 
+    signInWithEmailAndPassword, 
+    createUserWithEmailAndPassword, 
+    signInWithPopup, 
+    GoogleAuthProvider, 
+    signOut as fbSignOut, 
+    onAuthStateChanged,
+    signInAnonymously,
+    updateProfile,
+    updatePassword
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { 
+    doc, 
+    getDoc, 
+    setDoc, 
+    serverTimestamp 
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
 // ── Sign in with email/password ──────────────────────────────────────────
-async function signInWithEmail(email, password) {
-    const cred = await auth.signInWithEmailAndPassword(email, password);
+export async function signInWithEmail(email, password) {
+    const cred = await signInWithEmailAndPassword(auth, email, password);
     return cred.user;
 }
 
 // ── Sign up with email/password ──────────────────────────────────────────
-async function signUpWithEmail(displayName, email, password) {
-    const cred = await auth.createUserWithEmailAndPassword(email, password);
-    await cred.user.updateProfile({ displayName });
+export async function signUpWithEmail(displayName, email, password) {
+    const cred = await createUserWithEmailAndPassword(auth, email, password);
+    await updateProfile(cred.user, { displayName });
     return cred.user;
 }
 
 // ── Google sign-in (also works as sign-up) ───────────────────────────────
-async function signInWithGoogle() {
-    const provider = new firebase.auth.GoogleAuthProvider();
-    const cred = await auth.signInWithPopup(provider);
+export async function signInWithGoogle() {
+    const provider = new GoogleAuthProvider();
+    const cred = await signInWithPopup(auth, provider);
     return cred.user;
 }
 
 // ── Sign out ─────────────────────────────────────────────────────────────
-async function signOut() {
-    await auth.signOut();
+export async function signOut() {
+    await fbSignOut(auth);
 }
 
 // ── Get current user synchronously ───────────────────────────────────────
-function getCurrentUser() {
+export function getCurrentUser() {
     return auth.currentUser;
 }
 
 // ── Wait for auth to resolve, then return the user (or null) ─────────────
-function waitForAuth() {
+export function waitForAuth() {
     return new Promise(resolve => {
-        const unsub = auth.onAuthStateChanged(user => {
+        const unsub = onAuthStateChanged(auth, user => {
             unsub();
             resolve(user);
         });
@@ -42,14 +61,14 @@ function waitForAuth() {
 }
 
 // ── Anonymous auth (used silently for join flow) ─────────────────────────
-function ensureAnonymousAuth() {
+export function ensureAnonymousAuth() {
     return new Promise((resolve, reject) => {
-        const unsub = auth.onAuthStateChanged(user => {
+        const unsub = onAuthStateChanged(auth, user => {
             unsub();
             if (user) {
                 resolve(user);
             } else {
-                auth.signInAnonymously()
+                signInAnonymously(auth)
                     .then(cred => resolve(cred.user))
                     .catch(reject);
             }
@@ -58,7 +77,7 @@ function ensureAnonymousAuth() {
 }
 
 // ── Display name helper ──────────────────────────────────────────────────
-function userDisplayName(user) {
+export function userDisplayName(user) {
     if (!user) return "";
     if (user.isAnonymous) return "";
     return user.displayName || user.email || "User";
@@ -67,28 +86,28 @@ function userDisplayName(user) {
 // ─── User Profile Firestore Operations ───────────────────────────────────────
 
 /** Get user profile from Firestore */
-async function getUserProfile(uid) {
-    const snap = await db.collection("users").doc(uid).get();
-    if (!snap.exists) return null;
+export async function getUserProfile(uid) {
+    const snap = await getDoc(doc(db, "users", uid));
+    if (!snap.exists()) return null;
     return snap.data();
 }
 
 /** Save/update user profile in Firestore */
-async function saveUserProfile(uid, { displayName, birthday, favoriteVerse, avatarUrl }) {
+export async function saveUserProfile(uid, { displayName, birthday, favoriteVerse, avatarUrl }) {
     const data = {
-        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        updatedAt: serverTimestamp()
     };
     if (displayName !== undefined) data.displayName = displayName.trim();
     if (birthday !== undefined) data.birthday = birthday;
     if (favoriteVerse !== undefined) data.favoriteVerse = favoriteVerse.trim();
     if (avatarUrl !== undefined) data.avatarUrl = avatarUrl;
 
-    await db.collection("users").doc(uid).set(data, { merge: true });
+    await setDoc(doc(db, "users", uid), data, { merge: true });
 
     // Keep Firebase Auth displayName in sync
     const currentUser = auth.currentUser;
     if (currentUser && displayName && currentUser.displayName !== displayName) {
-        await currentUser.updateProfile({ displayName: displayName.trim() });
+        await updateProfile(currentUser, { displayName: displayName.trim() });
     }
 
     // Keep study membership display names in sync
@@ -98,8 +117,8 @@ async function saveUserProfile(uid, { displayName, birthday, favoriteVerse, avat
             if (profile && profile.studies) {
                 const studyIds = Object.keys(profile.studies);
                 const promises = studyIds.map(async studyId => {
-                    const memberRef = db.collection("studies").doc(studyId).collection("members").doc(uid);
-                    await memberRef.set({ displayName: displayName.trim() }, { merge: true }).catch(err => {
+                    const memberRef = doc(db, "studies", studyId, "members", uid);
+                    await setDoc(memberRef, { displayName: displayName.trim() }, { merge: true }).catch(err => {
                         console.warn(`Failed to update display name in study ${studyId}:`, err);
                     });
                 });
@@ -112,27 +131,24 @@ async function saveUserProfile(uid, { displayName, birthday, favoriteVerse, avat
 }
 
 /** Register a study association in the user's document */
-async function registerUserStudy(uid, studyId, studyName, role) {
-    await db.collection("users").doc(uid).set({
+export async function registerUserStudy(uid, studyId, studyName, role) {
+    await setDoc(doc(db, "users", uid), {
         studies: {
             [studyId]: {
                 name: studyName,
                 role: role,
-                joinedAt: firebase.firestore.FieldValue.serverTimestamp()
+                joinedAt: serverTimestamp()
             }
         }
     }, { merge: true });
 }
 
 /** Change user password */
-async function updateUserPassword(newPassword) {
+export async function updateUserPassword(newPassword) {
     const user = auth.currentUser;
     if (user) {
-        await user.updatePassword(newPassword);
+        await updatePassword(user, newPassword);
     } else {
         throw new Error("No user signed in.");
     }
 }
-
-
-
