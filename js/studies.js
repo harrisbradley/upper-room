@@ -52,17 +52,32 @@ async function createStudy(studyName) {
         });
 
     // Record leader membership
-    const leaderData = {
-        role:     "leader",
-        joinedAt: firebase.firestore.FieldValue.serverTimestamp(),
-    };
-    if (user.displayName) {
-        leaderData.displayName = user.displayName;
-    } else if (user.email) {
-        leaderData.displayName = user.email;
+    let displayName = "Leader";
+    if (!user.isAnonymous) {
+        try {
+            const profile = await getUserProfile(user.uid);
+            if (profile && profile.displayName) {
+                displayName = profile.displayName;
+            } else if (user.displayName) {
+                displayName = user.displayName;
+            } else if (user.email) {
+                displayName = user.email;
+            }
+        } catch (e) {
+            console.error("Failed to fetch user profile for leader name", e);
+            if (user.displayName) displayName = user.displayName;
+            else if (user.email) displayName = user.email;
+        }
     } else {
-        leaderData.displayName = "Leader";
+        if (user.displayName) displayName = user.displayName;
+        else if (user.email) displayName = user.email;
     }
+
+    const leaderData = {
+        role:        "leader",
+        joinedAt:    firebase.firestore.FieldValue.serverTimestamp(),
+        displayName: displayName,
+    };
     await db.collection(STUDIES).doc(studyId)
         .collection("members").doc(user.uid).set(leaderData);
 
@@ -243,5 +258,26 @@ async function deleteStudy(studyId) {
     batch.delete(db.collection(STUDIES).doc(studyId));
 
     await batch.commit();
+}
+
+/**
+ * Promotes a member to leader role (co-leader).
+ */
+async function promoteToLeader(studyId, memberUid) {
+    // 1. Update in the study members subcollection
+    const memberRef = db.collection(STUDIES).doc(studyId).collection("members").doc(memberUid);
+    await memberRef.update({ role: "leader" });
+
+    // 2. Also update in the user's profile document if it exists
+    const userRef = db.collection("users").doc(memberUid);
+    const userSnap = await userRef.get();
+    if (userSnap.exists) {
+        const data = userSnap.data();
+        if (data.studies && data.studies[studyId]) {
+            await userRef.update({
+                [`studies.${studyId}.role`]: "leader"
+            });
+        }
+    }
 }
 

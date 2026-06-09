@@ -90,6 +90,26 @@ async function saveUserProfile(uid, { displayName, birthday, favoriteVerse, avat
     if (currentUser && displayName && currentUser.displayName !== displayName) {
         await currentUser.updateProfile({ displayName: displayName.trim() });
     }
+
+    // Keep study membership display names in sync
+    if (displayName) {
+        try {
+            const profile = await getUserProfile(uid);
+            if (profile && profile.studies) {
+                const studyIds = Object.keys(profile.studies);
+                const batch = db.batch();
+                studyIds.forEach(studyId => {
+                    const memberRef = db.collection("studies").doc(studyId).collection("members").doc(uid);
+                    batch.update(memberRef, { displayName: displayName.trim() });
+                });
+                await batch.commit().catch(err => {
+                    console.warn("Failed to update display name in some studies:", err);
+                });
+            }
+        } catch (e) {
+            console.error("Failed to sync display name with studies", e);
+        }
+    }
 }
 
 /** Register a study association in the user's document */
