@@ -97,14 +97,13 @@ async function saveUserProfile(uid, { displayName, birthday, favoriteVerse, avat
             const profile = await getUserProfile(uid);
             if (profile && profile.studies) {
                 const studyIds = Object.keys(profile.studies);
-                const batch = db.batch();
-                studyIds.forEach(studyId => {
+                const promises = studyIds.map(async studyId => {
                     const memberRef = db.collection("studies").doc(studyId).collection("members").doc(uid);
-                    batch.update(memberRef, { displayName: displayName.trim() });
+                    await memberRef.set({ displayName: displayName.trim() }, { merge: true }).catch(err => {
+                        console.warn(`Failed to update display name in study ${studyId}:`, err);
+                    });
                 });
-                await batch.commit().catch(err => {
-                    console.warn("Failed to update display name in some studies:", err);
-                });
+                await Promise.all(promises);
             }
         } catch (e) {
             console.error("Failed to sync display name with studies", e);
