@@ -281,3 +281,24 @@ async function promoteToLeader(studyId, memberUid) {
     }
 }
 
+/**
+ * Demotes a leader back to member role.
+ */
+async function demoteToMember(studyId, memberUid) {
+    // 1. Update in the study members subcollection
+    const memberRef = db.collection(STUDIES).doc(studyId).collection("members").doc(memberUid);
+    await memberRef.update({ role: "member" });
+
+    // 2. Also update in the user's profile document if it exists
+    const userRef = db.collection("users").doc(memberUid);
+    const userSnap = await userRef.get();
+    if (userSnap.exists) {
+        const data = userSnap.data();
+        if (data.studies && data.studies[studyId]) {
+            await userRef.update({
+                [`studies.${studyId}.role`]: "member"
+            });
+        }
+    }
+}
+

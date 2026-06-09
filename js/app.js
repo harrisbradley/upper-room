@@ -271,6 +271,7 @@ async function initStudy() {
 
     let currentUser = null;
     let isLeader    = false;
+    let isCreator   = false;
 
     try {
         currentUser = await ensureAnonymousAuth();
@@ -291,6 +292,7 @@ async function initStudy() {
         }
         const role = await getMyRole(studyId, currentUser.uid);
         isLeader = role === "leader";
+        isCreator = study && currentUser && study.createdBy === currentUser.uid;
     } catch (err) {
         hide(loadingEl);
         setError(errorEl, "Failed to load study.");
@@ -468,9 +470,12 @@ async function initStudy() {
                         
                         if (m.role === "leader") {
                             roleLabel = `<span class="roster-role-badge leader">Leader</span>`;
+                            if (isCreator && m.uid !== study.createdBy) {
+                                actionBtn = `<button class="btn btn-xs btn-outline revoke-leader-btn" data-uid="${m.uid}" data-name="${nameEscaped}" style="margin-left: 10px; padding: 2px 6px; font-size: 0.75rem; color: #dc2626; border-color: #dc2626;">Revoke Co-Leader</button>`;
+                            }
                         } else {
                             roleLabel = `<span class="roster-role-badge">Member</span>`;
-                            if (isLeader && m.uid !== currentUser.uid) {
+                            if (isCreator) {
                                 actionBtn = `<button class="btn btn-xs btn-outline make-leader-btn" data-uid="${m.uid}" data-name="${nameEscaped}" style="margin-left: 10px; padding: 2px 6px; font-size: 0.75rem;">Make Co-Leader</button>`;
                             }
                         }
@@ -505,6 +510,26 @@ async function initStudy() {
                                     alert("Failed to promote member: " + err.message);
                                     btn.disabled = false;
                                     btn.textContent = "Make Co-Leader";
+                                }
+                            }
+                        });
+                    });
+
+                    // Bind click listeners to "Revoke Co-Leader" buttons
+                    rosterList.querySelectorAll(".revoke-leader-btn").forEach(btn => {
+                        btn.addEventListener("click", async () => {
+                            const memberUid = btn.getAttribute("data-uid");
+                            const memberName = btn.getAttribute("data-name");
+                            if (confirm(`Are you sure you want to revoke "${memberName}"'s co-leader status?`)) {
+                                btn.disabled = true;
+                                btn.textContent = "Updating...";
+                                try {
+                                    await demoteToMember(studyId, memberUid);
+                                    await loadRoster();
+                                } catch (err) {
+                                    alert("Failed to revoke leader status: " + err.message);
+                                    btn.disabled = false;
+                                    btn.textContent = "Revoke Co-Leader";
                                 }
                             }
                         });
