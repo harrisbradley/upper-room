@@ -2,6 +2,7 @@
 // Authentication helpers — email/password, Google, anonymous, sign-out
 
 import { auth, db } from "./firebase-config.js";
+export { auth };
 import { 
     signInWithEmailAndPassword, 
     createUserWithEmailAndPassword, 
