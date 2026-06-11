@@ -148,8 +148,8 @@ export async function getMyStudies(uid) {
         })
         .filter(s => !s.archived) // Hide archived studies from the main dashboard
         .sort((a, b) => {
-            const ta = a.createdAt ? a.createdAt.toMillis() : 0;
-            const tb = b.createdAt ? b.createdAt.toMillis() : 0;
+            const ta = a.createdAt ? (a.createdAt.toMillis ? a.createdAt.toMillis() : new Date(a.createdAt).getTime()) : 0;
+            const tb = b.createdAt ? (b.createdAt.toMillis ? b.createdAt.toMillis() : new Date(b.createdAt).getTime()) : 0;
             return tb - ta; // newest first
         });
 }
@@ -225,8 +225,8 @@ export async function getStudyMembers(studyId) {
             };
         })
         .sort((a, b) => {
-            const ta = a.joinedAt ? a.joinedAt.toMillis() : 0;
-            const tb = b.joinedAt ? b.joinedAt.toMillis() : 0;
+            const ta = a.joinedAt ? (a.joinedAt.toMillis ? a.joinedAt.toMillis() : new Date(a.joinedAt).getTime()) : 0;
+            const tb = b.joinedAt ? (b.joinedAt.toMillis ? b.joinedAt.toMillis() : new Date(b.joinedAt).getTime()) : 0;
             return ta - tb; // oldest first (chronological roster)
         });
 }
