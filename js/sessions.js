@@ -1,24 +1,37 @@
 // js/sessions.js
 // Firestore operations for sessions
 
+import { db } from "./firebase-config.js";
+import { 
+    doc, 
+    collection, 
+    addDoc, 
+    getDoc, 
+    getDocs, 
+    updateDoc, 
+    query, 
+    orderBy, 
+    serverTimestamp 
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
 /**
  * Returns all sessions for a study, ordered by `order` asc.
  */
-async function listSessions(studyId) {
-    const snap = await db.collection("studies").doc(studyId)
-        .collection("sessions")
-        .orderBy("order", "asc")
-        .get();
+export async function listSessions(studyId) {
+    const q = query(
+        collection(db, "studies", studyId, "sessions"),
+        orderBy("order", "asc")
+    );
+    const snap = await getDocs(q);
     return snap.docs.map(d => ({ id: d.id, ...d.data() }));
 }
 
 /**
  * Returns a single session document.
  */
-async function getSession(studyId, sessionId) {
-    const snap = await db.collection("studies").doc(studyId)
-        .collection("sessions").doc(sessionId).get();
-    if (!snap.exists) return null;
+export async function getSession(studyId, sessionId) {
+    const snap = await getDoc(doc(db, "studies", studyId, "sessions", sessionId));
+    if (!snap.exists()) return null;
     return { id: snap.id, ...snap.data() };
 }
 
@@ -26,56 +39,53 @@ async function getSession(studyId, sessionId) {
  * Creates a new session in a study.
  * order uses Date.now() for simple append-to-bottom behavior.
  */
-async function createSession(studyId, passageRef, questions) {
-    const ref = await db.collection("studies").doc(studyId)
-        .collection("sessions").add({
-            order:       Date.now(),
-            title:       passageRef || "New Session",
-            scheduledAt: null,
-            passage:     { reference: passageRef || "" },
-            agenda:      { questions: questions || [], leaderNotes: "" },
-            createdAt:   firebase.firestore.FieldValue.serverTimestamp(),
-            updatedAt:   firebase.firestore.FieldValue.serverTimestamp(),
-        });
+export async function createSession(studyId, passageRef, questions) {
+    const ref = await addDoc(collection(db, "studies", studyId, "sessions"), {
+        order:       Date.now(),
+        title:       passageRef || "New Session",
+        scheduledAt: null,
+        passage:     { reference: passageRef || "" },
+        agenda:      { questions: questions || [], leaderNotes: "" },
+        createdAt:   serverTimestamp(),
+        updatedAt:   serverTimestamp(),
+    });
     return ref.id;
 }
 
 /**
  * Updates the editable fields of a session (scripture, questions, notes, completion).
  */
-async function updateSession(studyId, sessionId, { passageRef, questions, leaderNotes, completed }) {
+export async function updateSession(studyId, sessionId, { passageRef, questions, leaderNotes, completed }) {
     const updateData = {
         title:              passageRef || "Session",
         "passage.reference": passageRef || "",
         "agenda.questions":  questions  || [],
         "agenda.leaderNotes": leaderNotes || "",
-        updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+        updatedAt: serverTimestamp(),
     };
     if (completed !== undefined) {
         updateData.completed = !!completed;
         if (completed) {
-            updateData.completedAt = firebase.firestore.FieldValue.serverTimestamp();
+            updateData.completedAt = serverTimestamp();
         } else {
             updateData.completedAt = null;
         }
     }
-    await db.collection("studies").doc(studyId)
-        .collection("sessions").doc(sessionId).update(updateData);
+    await updateDoc(doc(db, "studies", studyId, "sessions", sessionId), updateData);
 }
 
 /**
  * Posts a recap to a session document.
  */
-async function postRecap(studyId, sessionId, uid, { summary, keyTakeaways, prayerIntentions }) {
-    await db.collection("studies").doc(studyId)
-        .collection("sessions").doc(sessionId).update({
-            recap: {
-                summary,
-                keyTakeaways:     keyTakeaways     || [],
-                prayerIntentions: prayerIntentions || [],
-                postedAt:         firebase.firestore.FieldValue.serverTimestamp(),
-                postedByUid:      uid,
-            },
-            updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
-        });
+export async function postRecap(studyId, sessionId, uid, { summary, keyTakeaways, prayerIntentions }) {
+    await updateDoc(doc(db, "studies", studyId, "sessions", sessionId), {
+        recap: {
+            summary,
+            keyTakeaways:     keyTakeaways     || [],
+            prayerIntentions: prayerIntentions || [],
+            postedAt:         serverTimestamp(),
+            postedByUid:      uid,
+        },
+        updatedAt: serverTimestamp(),
+    });
 }

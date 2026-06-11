@@ -2,6 +2,10 @@
 // Firebase configuration for Upper Room
 // Get these values from: Firebase Console → Project Settings → Your apps → Web app → Config
 
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getFirestore } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
 const firebaseConfig = {
     apiKey: "AIzaSyANOShB9iUcRUPHfyOUiiH9i6JwIEiYj7M",
     authDomain: "upper-room-application.firebaseapp.com",
@@ -12,7 +16,7 @@ const firebaseConfig = {
     measurementId: "G-DSLXMLZ74D"
 };
 
-firebase.initializeApp(firebaseConfig);
+const app = initializeApp(firebaseConfig);
 
-const auth = firebase.auth();
-const db   = firebase.firestore();
+export const auth = getAuth(app);
+export const db   = getFirestore(app);
