@@ -18,6 +18,8 @@ import {
     doc, 
     getDoc, 
     setDoc, 
+    updateDoc,
+    deleteField,
     serverTimestamp 
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
@@ -142,6 +144,17 @@ export async function registerUserStudy(uid, studyId, studyName, role) {
             }
         }
     }, { merge: true });
+}
+
+/** Remove deleted studies from user document */
+export async function removeDeletedStudiesFromProfile(uid, deletedStudyIds) {
+    if (!deletedStudyIds || deletedStudyIds.length === 0) return;
+    const userRef = doc(db, "users", uid);
+    const updates = {};
+    deletedStudyIds.forEach(id => {
+        updates[`studies.${id}`] = deleteField();
+    });
+    await updateDoc(userRef, updates);
 }
 
 /** Change user password */

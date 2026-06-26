@@ -12,7 +12,8 @@ import {
     ensureAnonymousAuth, 
     signInWithEmail, 
     signInWithGoogle, 
-    signUpWithEmail 
+    signUpWithEmail,
+    removeDeletedStudiesFromProfile
 } from "./auth.js";
 
 import { 
@@ -1254,8 +1255,12 @@ async function initProfile() {
     }
 
     // Load and render studies list
-    function renderStudies() {
-        studiesListEl.innerHTML = "";
+    async function renderStudies() {
+        studiesListEl.innerHTML = `
+            <div class="text-muted" style="font-size: .9rem; text-align: center; padding: 12px 0;">
+                Loading studies...
+            </div>
+        `;
         const studiesMap = (profileData && profileData.studies) ? profileData.studies : {};
         const studyIds = Object.keys(studiesMap);
 
@@ -1268,17 +1273,59 @@ async function initProfile() {
             return;
         }
 
+        const resolvedStudies = [];
+        const deletedStudyIds = [];
+
+        try {
+            await Promise.all(studyIds.map(async id => {
+                const actualStudy = await getStudy(id);
+                if (actualStudy) {
+                    resolvedStudies.push({
+                        id,
+                        name: actualStudy.name || studiesMap[id].name || "Bible Study",
+                        role: studiesMap[id].role || "member",
+                        joinedAt: studiesMap[id].joinedAt || null
+                    });
+                } else {
+                    deletedStudyIds.push(id);
+                }
+            }));
+        } catch (err) {
+            console.error("Error resolving user studies from Firestore:", err);
+            // Fallback: use stored local mapping if resolve fails (e.g. offline/network issue)
+            studyIds.forEach(id => {
+                resolvedStudies.push({
+                    id,
+                    ...studiesMap[id]
+                });
+            });
+        }
+
+        // Clean up deleted studies from the user document in Firestore asynchronously (don't block UI)
+        if (deletedStudyIds.length > 0) {
+            removeDeletedStudiesFromProfile(currentUser.uid, deletedStudyIds).catch(err => {
+                console.error("Failed to clean up deleted studies on user profile:", err);
+            });
+        }
+
+        if (resolvedStudies.length === 0) {
+            studiesListEl.innerHTML = `
+                <div class="text-muted" style="font-size: .9rem; text-align: center; padding: 12px 0;">
+                    You are not a part of any studies yet.
+                </div>
+            `;
+            return;
+        }
+
         // Sort studies by joinedAt desc
-        const sortedStudies = studyIds.map(id => ({
-            id,
-            ...studiesMap[id]
-        })).sort((a, b) => {
+        resolvedStudies.sort((a, b) => {
             const ta = a.joinedAt ? (a.joinedAt.toMillis ? a.joinedAt.toMillis() : new Date(a.joinedAt).getTime()) : 0;
             const tb = b.joinedAt ? (b.joinedAt.toMillis ? b.joinedAt.toMillis() : new Date(b.joinedAt).getTime()) : 0;
             return tb - ta;
         });
 
-        sortedStudies.forEach(s => {
+        studiesListEl.innerHTML = "";
+        resolvedStudies.forEach(s => {
             const item = document.createElement("a");
             item.href = `study.html?id=${s.id}`;
             item.className = "profile-study-item";
@@ -1299,7 +1346,7 @@ async function initProfile() {
             studiesListEl.appendChild(item);
         });
     }
-    renderStudies();
+    await renderStudies();
 
     // Profile details submission
     profileForm.addEventListener("submit", async e => {
