@@ -253,6 +253,16 @@ export async function archiveStudy(studyId) {
 }
 
 /**
+ * Un-archive a study.
+ */
+export async function unarchiveStudy(studyId) {
+    await updateDoc(doc(db, STUDIES, studyId), {
+        archived: false,
+        archivedAt: null,
+    });
+}
+
+/**
  * Delete a study, its join code mapping, and all its sessions and members.
  */
 export async function deleteStudy(studyId) {
