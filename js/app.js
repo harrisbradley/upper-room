@@ -26,6 +26,7 @@ import {
     getStudyMembers, 
     updateStudyName, 
     archiveStudy, 
+    unarchiveStudy,
     deleteStudy, 
     promoteToLeader, 
     demoteToMember 
@@ -341,7 +342,19 @@ async function initStudy() {
         return;
     }
 
-    setText(titleEl, study.name);
+    if (study.archived) {
+        // Show an archived banner at the top of the content area
+        const archiveBanner = document.createElement("div");
+        archiveBanner.className = "msg msg-info";
+        archiveBanner.style.marginBottom = "20px";
+        archiveBanner.textContent = "This study has been archived and is hidden from the main active studies dashboard.";
+        contentEl.insertBefore(archiveBanner, contentEl.firstChild);
+
+        // Render archived status next to the title
+        titleEl.innerHTML = `${escapeHtml(study.name)} <span class="roster-role-badge" style="background: var(--border); color: var(--text-muted); border: 1px solid var(--border); margin-left: 10px; font-weight: normal; font-size: 0.8rem; vertical-align: middle;">Archived</span>`;
+    } else {
+        setText(titleEl, study.name);
+    }
     document.title = study.name + " — Upper Room";
     if (joinCodeEl) joinCodeEl.textContent = study.joinCode;
 
@@ -491,6 +504,9 @@ async function initStudy() {
 
         show(dashboardEl);
         if (editStudyNameInput) editStudyNameInput.value = study.name;
+        if (study.archived && archiveBtn) {
+            archiveBtn.textContent = "Un-archive Study";
+        }
 
         // Toggle Roster Tab
         tabRosterBtn.addEventListener("click", () => {
@@ -626,17 +642,32 @@ async function initStudy() {
 
         // Archive Study
         archiveBtn.addEventListener("click", async () => {
-            if (!confirm("Are you sure you want to archive this study? It will be hidden from your main list.")) return;
-            archiveBtn.disabled = true;
-            archiveBtn.textContent = "Archiving…";
-            hide(dangerMsg);
-            try {
-                await archiveStudy(studyId);
-                location.href = "index.html";
-            } catch (err) {
-                setError(dangerMsg, err.message || "Failed to archive study.");
-                archiveBtn.disabled = false;
-                archiveBtn.textContent = "Archive Study";
+            if (study.archived) {
+                if (!confirm("Are you sure you want to un-archive this study? It will show up on your main active list again.")) return;
+                archiveBtn.disabled = true;
+                archiveBtn.textContent = "Un-archiving…";
+                hide(dangerMsg);
+                try {
+                    await unarchiveStudy(studyId);
+                    location.reload();
+                } catch (err) {
+                    setError(dangerMsg, err.message || "Failed to un-archive study.");
+                    archiveBtn.disabled = false;
+                    archiveBtn.textContent = "Un-archive Study";
+                }
+            } else {
+                if (!confirm("Are you sure you want to archive this study? It will be hidden from your main list.")) return;
+                archiveBtn.disabled = true;
+                archiveBtn.textContent = "Archiving…";
+                hide(dangerMsg);
+                try {
+                    await archiveStudy(studyId);
+                    location.href = "index.html";
+                } catch (err) {
+                    setError(dangerMsg, err.message || "Failed to archive study.");
+                    archiveBtn.disabled = false;
+                    archiveBtn.textContent = "Archive Study";
+                }
             }
         });
 
@@ -1284,7 +1315,8 @@ async function initProfile() {
                         id,
                         name: actualStudy.name || studiesMap[id].name || "Bible Study",
                         role: studiesMap[id].role || "member",
-                        joinedAt: studiesMap[id].joinedAt || null
+                        joinedAt: studiesMap[id].joinedAt || null,
+                        archived: actualStudy.archived || false
                     });
                 } else {
                     deletedStudyIds.push(id);
@@ -1296,7 +1328,8 @@ async function initProfile() {
             studyIds.forEach(id => {
                 resolvedStudies.push({
                     id,
-                    ...studiesMap[id]
+                    ...studiesMap[id],
+                    archived: false
                 });
             });
         }
@@ -1335,13 +1368,20 @@ async function initProfile() {
                 : `<span class="roster-role-badge">Member</span>`;
 
             const dateStr = s.joinedAt ? formatDate(s.joinedAt) : "";
+            
+            const archivedBadge = s.archived 
+                ? `<span class="roster-role-badge" style="background: var(--border); color: var(--text-muted); border: 1px solid var(--border); margin-right: 6px;">Archived</span>` 
+                : "";
 
             item.innerHTML = `
                 <div>
                     <strong style="color:var(--primary); font-size: .95rem;">${escapeHtml(s.name)}</strong>
                     ${dateStr ? `<div class="text-muted" style="font-size: .75rem; margin-top: 2px;">Joined ${dateStr}</div>` : ""}
                 </div>
-                ${roleBadge}
+                <div style="display: flex; align-items: center; gap: 6px;">
+                    ${archivedBadge}
+                    ${roleBadge}
+                </div>
             `;
             studiesListEl.appendChild(item);
         });
