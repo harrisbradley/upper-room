@@ -18,7 +18,8 @@ import {
     query, 
     where, 
     writeBatch, 
-    serverTimestamp 
+    serverTimestamp,
+    deleteField
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const STUDIES    = "studies";
@@ -278,6 +279,18 @@ export async function deleteStudy(studyId) {
     if (joinCode) {
         batch.delete(doc(db, JOIN_CODES, joinCode));
     }
+
+    // Clean up study association from user profiles of all members
+    const memberUids = membersSnap.docs.map(doc => doc.id);
+    await Promise.all(memberUids.map(async uid => {
+        const userRef = doc(db, "users", uid);
+        const userSnap = await getDoc(userRef);
+        if (userSnap.exists()) {
+            batch.update(userRef, {
+                [`studies.${studyId}`]: deleteField()
+            });
+        }
+    }));
 
     // Delete primary study document
     batch.delete(doc(db, STUDIES, studyId));
