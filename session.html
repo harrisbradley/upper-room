@@ -37,6 +37,8 @@
     <!-- Content -->
     <div id="content" class="hidden">
 
+      <h1 id="session-title" class="page-title">Session</h1>
+
       <!-- Scripture -->
       <div class="card">
         <div class="section-title">Scripture</div>
@@ -49,6 +51,10 @@
           <button id="edit-btn" class="btn btn-ghost btn-sm">Edit session</button>
 
           <form id="edit-form" class="hidden" style="margin-top:16px;">
+            <div class="form-group">
+              <label for="edit-title">Session name <span class="text-muted">(optional)</span></label>
+              <input type="text" id="edit-title" placeholder="e.g. Walking in the Spirit" autocomplete="off">
+            </div>
             <div class="form-group">
               <label for="edit-passage">Scripture passage</label>
               <input type="text" id="edit-passage" placeholder="e.g. John 3:16-21" autocomplete="off">

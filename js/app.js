@@ -304,6 +304,7 @@ async function initStudy() {
     const newSessionForm = qs("#new-session-form");
     const cancelNewBtn  = qs("#cancel-new-session");
     const submitNewBtn  = qs("#submit-new-session");
+    const newTitleEl    = qs("#new-title");
     const newPassageEl  = qs("#new-passage");
     const newQuestionsEl= qs("#new-questions");
     const newFormMsg    = qs("#new-session-msg");
@@ -386,8 +387,10 @@ async function initStudy() {
         } else {
             sessions.forEach((s, i) => {
                 const hasRecap    = !!s.recap;
-                const passageRef  = (s.passage && s.passage.reference) ? s.passage.reference : s.title || "Session";
+                const passageRef  = (s.passage && s.passage.reference) ? s.passage.reference : "";
+                const sessionTitle = s.title || passageRef || "Session";
                 const meta        = s.scheduledAt ? formatDate(s.scheduledAt) : "";
+                const showPassage = passageRef && passageRef !== sessionTitle;
 
                 const badges = [];
                 if (s.completed) {
@@ -404,8 +407,11 @@ async function initStudy() {
                 a.innerHTML = `
                     <div class="session-item-num">${i + 1}</div>
                     <div class="session-item-info">
-                        <div class="session-item-title">${escapeHtml(passageRef)}</div>
-                        ${meta ? `<div class="session-item-meta">${meta}</div>` : ""}
+                        <div class="session-item-title">${escapeHtml(sessionTitle)}</div>
+                        <div class="session-item-meta">
+                            ${showPassage ? `<span class="session-item-passage">${escapeHtml(passageRef)}</span>` : ""}
+                            ${meta ? `${showPassage ? " &bull; " : ""}${meta}` : ""}
+                        </div>
                     </div>
                     ${badgesHtml}`;
                 sessionList.appendChild(a);
@@ -429,6 +435,7 @@ async function initStudy() {
         cancelNewBtn.addEventListener("click", () => {
             show(newSessionBtn);
             hide(newSessionForm);
+            if (newTitleEl) newTitleEl.value = "";
             newPassageEl.value = "";
             newQuestionsEl.value = "";
             hide(newFormMsg);
@@ -438,6 +445,7 @@ async function initStudy() {
     if (newSessionForm) {
         newSessionForm.addEventListener("submit", async e => {
             e.preventDefault();
+            const title     = newTitleEl ? newTitleEl.value.trim() : "";
             const passage   = newPassageEl.value.trim();
             const questions = parseLines(newQuestionsEl.value);
             if (!passage) { setError(newFormMsg, "Please enter a scripture passage."); return; }
@@ -447,7 +455,8 @@ async function initStudy() {
             submitNewBtn.disabled = true;
             submitNewBtn.textContent = "Creating…";
             try {
-                await createSession(studyId, passage, questions);
+                await createSession(studyId, title, passage, questions);
+                if (newTitleEl) newTitleEl.value = "";
                 newPassageEl.value = "";
                 newQuestionsEl.value = "";
                 show(newSessionBtn);
@@ -665,6 +674,7 @@ async function initSession() {
     const contentEl     = qs("#content");
     const errorEl       = qs("#error");
     const studyLinkEl   = qs("#study-link");
+    const sessionTitleEl= qs("#session-title");
     const passageEl     = qs("#passage-ref");
     const questionsEl   = qs("#questions-list");
     const leaderNotesSec= qs("#leader-notes-section");
@@ -674,6 +684,7 @@ async function initSession() {
     const editSection   = qs("#edit-section");
     const editBtn       = qs("#edit-btn");
     const editForm      = qs("#edit-form");
+    const editTitle     = qs("#edit-title");
     const editPassage   = qs("#edit-passage");
     const editQuestions = qs("#edit-questions");
     const editNotes     = qs("#edit-leader-notes");
@@ -729,11 +740,13 @@ async function initSession() {
     }
 
     function renderSession() {
+        const sessionTitle = session.title || (session.passage && session.passage.reference) || "Session";
         const passageRef = (session.passage && session.passage.reference) ? session.passage.reference : "";
         const questions  = (session.agenda  && session.agenda.questions)  ? session.agenda.questions  : [];
         const notes      = (session.agenda  && session.agenda.leaderNotes)? session.agenda.leaderNotes: "";
 
-        document.title = (passageRef || "Session") + " — Upper Room";
+        document.title = sessionTitle + " — Upper Room";
+        if (sessionTitleEl) sessionTitleEl.textContent = sessionTitle;
 
         if (passageEl) {
             if (passageRef) {
@@ -760,6 +773,7 @@ async function initSession() {
         }
 
         // Populate edit form
+        if (editTitle)     editTitle.value     = session.title || "";
         if (editPassage)   editPassage.value   = passageRef;
         if (editQuestions) editQuestions.value = questions.join("\n");
         if (editNotes)     editNotes.value     = notes;
@@ -814,6 +828,7 @@ async function initSession() {
 
         editForm.addEventListener("submit", async e => {
             e.preventDefault();
+            const title     = editTitle ? editTitle.value.trim() : "";
             const passage   = editPassage.value.trim();
             const questions = parseLines(editQuestions.value);
             const notes     = editNotes ? editNotes.value.trim() : "";
@@ -825,7 +840,7 @@ async function initSession() {
             saveEditBtn.disabled = true;
             saveEditBtn.textContent = "Saving…";
             try {
-                await updateSession(studyId, sessionId, { passageRef: passage, questions, leaderNotes: notes, completed });
+                await updateSession(studyId, sessionId, { title, passageRef: passage, questions, leaderNotes: notes, completed });
                 session = await getSession(studyId, sessionId);
                 renderSession();
                 show(editBtn);

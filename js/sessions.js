@@ -39,10 +39,10 @@ export async function getSession(studyId, sessionId) {
  * Creates a new session in a study.
  * order uses Date.now() for simple append-to-bottom behavior.
  */
-export async function createSession(studyId, passageRef, questions) {
+export async function createSession(studyId, title, passageRef, questions) {
     const ref = await addDoc(collection(db, "studies", studyId, "sessions"), {
         order:       Date.now(),
-        title:       passageRef || "New Session",
+        title:       title || passageRef || "New Session",
         scheduledAt: null,
         passage:     { reference: passageRef || "" },
         agenda:      { questions: questions || [], leaderNotes: "" },
@@ -55,9 +55,9 @@ export async function createSession(studyId, passageRef, questions) {
 /**
  * Updates the editable fields of a session (scripture, questions, notes, completion).
  */
-export async function updateSession(studyId, sessionId, { passageRef, questions, leaderNotes, completed }) {
+export async function updateSession(studyId, sessionId, { title, passageRef, questions, leaderNotes, completed }) {
     const updateData = {
-        title:              passageRef || "Session",
+        title:              title || passageRef || "Session",
         "passage.reference": passageRef || "",
         "agenda.questions":  questions  || [],
         "agenda.leaderNotes": leaderNotes || "",
