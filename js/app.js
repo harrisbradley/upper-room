@@ -1,6 +1,45 @@
 // js/app.js
 // Page controllers — one init function per page, called from each HTML file.
 
+import { 
+    auth, 
+    signOut, 
+    userDisplayName, 
+    getUserProfile, 
+    saveUserProfile, 
+    updateUserPassword, 
+    waitForAuth, 
+    ensureAnonymousAuth, 
+    signInWithEmail, 
+    signInWithGoogle, 
+    signUpWithEmail 
+} from "./auth.js";
+
+import { 
+    createStudy, 
+    getStudy, 
+    getMyStudies, 
+    getMyRole, 
+    resolveJoinCode, 
+    joinStudy, 
+    getStudyMembers, 
+    updateStudyName, 
+    archiveStudy, 
+    deleteStudy, 
+    promoteToLeader, 
+    demoteToMember 
+} from "./studies.js";
+
+import { 
+    listSessions, 
+    getSession, 
+    createSession, 
+    updateSession, 
+    postRecap 
+} from "./sessions.js";
+
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
 // ─── Header auth widget ────────────────────────────────────────────────────
 // Call initHeader() on every page to show user name + sign-out in the header.
 
@@ -10,7 +49,7 @@ function initHeader() {
     const signoutBtn= qs("#header-signout");
     const signinBtn = qs("#header-signin");
 
-    auth.onAuthStateChanged(async user => {
+    onAuthStateChanged(auth, async user => {
         if (user && !user.isAnonymous) {
             if (nameEl) {
                 let displayName = userDisplayName(user);
@@ -1329,4 +1368,13 @@ async function initProfile() {
     hide(loadingEl);
     show(contentEl);
 }
+
+// Attach controller functions to global window scope so legacy HTML scripts can access them
+window.initHome = initHome;
+window.initStudy = initStudy;
+window.initSession = initSession;
+window.initJoin = initJoin;
+window.initLogin = initLogin;
+window.initSignup = initSignup;
+window.initProfile = initProfile;
 
