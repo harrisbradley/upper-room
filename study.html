@@ -106,6 +106,10 @@
           <h3 style="font-size:1rem;font-weight:700;color:var(--primary);margin-bottom:12px;">Add a session</h3>
           <form>
             <div class="form-group">
+              <label for="new-title">Session name <span class="text-muted">(optional)</span></label>
+              <input type="text" id="new-title" placeholder="e.g. Walking in the Spirit" autocomplete="off">
+            </div>
+            <div class="form-group">
               <label for="new-passage">Scripture passage</label>
               <input type="text" id="new-passage" placeholder="e.g. Romans 8:1-17" autocomplete="off">
             </div>
@@ -128,7 +132,7 @@
 </main>
 
 <!-- App scripts -->
-<script type="module" src="js/app.js?v=7"></script>
+<script type="module" src="js/app.js?v=8"></script>
 <script type="module">initStudy();</script>
 
 </body>
