@@ -57,11 +57,31 @@
         </div>
       </div>
 
-      <!-- Scripture -->
+      <!-- Lectio (Scripture) -->
       <div class="card">
-        <div class="section-title">Scripture</div>
-        <div class="scripture-block">
-          <div id="passage-ref" class="scripture-ref">—</div>
+        <div class="section-title">Lectio</div>
+        
+        <div class="mt-12">
+          <strong style="font-size:.85rem;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);">Scripture Focus</strong>
+          <div class="scripture-block mt-6">
+            <div id="passage-ref" class="scripture-ref">—</div>
+          </div>
+        </div>
+
+        <div id="passage-text-container" class="mt-16 hidden">
+          <strong style="font-size:.85rem;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);">The Text</strong>
+          <div id="passage-text" style="white-space:pre-wrap;line-height:2.2;padding:16px;background:var(--input-bg);border:1px solid var(--border);border-radius:var(--radius);min-height:60px;margin-top:8px;font-size:1.05rem;"></div>
+        </div>
+
+        <!-- The Word Box (Participant) -->
+        <div id="the-word-section" class="mt-20" style="border-top:1px solid var(--border);padding-top:16px;">
+          <strong style="font-size:.85rem;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);">The Word <span class="text-muted">(Participant)</span></strong>
+          <p class="text-muted mt-4" style="font-size:.8rem;line-height:1.4;">Write down the single word or short phrase that stood out to you during the first or second reading.</p>
+          <div class="flex gap-8 mt-12">
+            <input type="text" id="the-word-input" placeholder="e.g. Unconditional" autocomplete="off" style="flex:1;margin:0;">
+            <button id="save-the-word-btn" class="btn btn-primary" style="padding:0 16px;font-size:.9rem;">Save</button>
+          </div>
+          <div id="the-word-msg" class="msg hidden" style="margin-top:8px;"></div>
         </div>
 
         <!-- Edit button (leader only) -->
@@ -88,6 +108,10 @@
             <div class="form-group">
               <label for="edit-passage">Scripture passage</label>
               <input type="text" id="edit-passage" placeholder="e.g. John 3:16-21" autocomplete="off">
+            </div>
+            <div class="form-group">
+              <label for="edit-passage-text">Scripture Text <span class="text-muted">(Organizer)</span></label>
+              <textarea id="edit-passage-text" rows="6" placeholder="Paste the scripture text here for double-spaced reading..."></textarea>
             </div>
             <div class="form-group">
               <label for="edit-questions">Discussion questions <span class="text-muted">(one per line)</span></label>
@@ -179,7 +203,7 @@
 </main>
 
 <!-- App scripts -->
-<script type="module" src="js/app.js?v=12"></script>
+<script type="module" src="js/app.js?v=13"></script>
 <script type="module">initSession();</script>
 
 </body>
