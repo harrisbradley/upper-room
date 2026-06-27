@@ -162,13 +162,6 @@ function setSuccess(el, msg) {
     show(el);
 }
 
-function setSuccess(el, msg) {
-    if (!el) return;
-    el.className = "msg msg-success";
-    el.textContent = msg;
-    show(el);
-}
-
 function formatDate(ts) {
     if (!ts) return "";
     const d = ts.toDate ? ts.toDate() : new Date(ts);
