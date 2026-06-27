@@ -712,8 +712,12 @@ async function initSession() {
     const passageEl     = qs("#passage-ref");
     const passageTextContainer= qs("#passage-text-container");
     const passageTextEl = qs("#passage-text");
+    const theWordView   = qs("#the-word-view");
+    const theWordEdit   = qs("#the-word-edit");
+    const theWordDisplay= qs("#the-word-display");
     const theWordInput  = qs("#the-word-input");
     const saveTheWordBtn= qs("#save-the-word-btn");
+    const editTheWordBtn= qs("#edit-the-word-btn");
     const theWordMsg    = qs("#the-word-msg");
     const questionsEl   = qs("#questions-list");
     const leaderNotesSec= qs("#leader-notes-section");
@@ -830,8 +834,17 @@ async function initSession() {
         }
 
         // Render participant "The Word" box
-        if (theWordInput) {
-            theWordInput.value = (participantData && participantData.word) ? participantData.word : "";
+        const savedWord = (participantData && participantData.word) ? participantData.word : "";
+        if (savedWord) {
+            // View mode
+            if (theWordDisplay) theWordDisplay.textContent = `"${savedWord}"`;
+            if (theWordView) show(theWordView);
+            if (theWordEdit) hide(theWordEdit);
+        } else {
+            // Edit mode
+            if (theWordInput) theWordInput.value = "";
+            if (theWordView) hide(theWordView);
+            if (theWordEdit) show(theWordEdit);
         }
 
         if (questionsEl) {
@@ -1014,19 +1027,42 @@ async function initSession() {
     if (saveTheWordBtn) {
         saveTheWordBtn.addEventListener("click", async () => {
             const word = (theWordInput && theWordInput.value.trim()) || "";
+            if (!word) { setError(theWordMsg, "Please enter a word or phrase."); return; }
             hide(theWordMsg);
             saveTheWordBtn.disabled = true;
             saveTheWordBtn.textContent = "Saving…";
             try {
                 await updateParticipantData(studyId, sessionId, currentUser.uid, { word });
                 participantData = { ...participantData, word };
+                
+                // Show view mode and hide edit mode
+                if (theWordDisplay) theWordDisplay.textContent = `"${word}"`;
+                if (theWordView) show(theWordView);
+                if (theWordEdit) hide(theWordEdit);
+                
                 setSuccess(theWordMsg, "Saved!");
+                setTimeout(() => {
+                    hide(theWordMsg);
+                }, 2500);
             } catch (err) {
                 setError(theWordMsg, err.message || "Failed to save.");
             } finally {
                 saveTheWordBtn.disabled = false;
                 saveTheWordBtn.textContent = "Save";
             }
+        });
+    }
+
+    if (editTheWordBtn) {
+        editTheWordBtn.addEventListener("click", () => {
+            const savedWord = (participantData && participantData.word) ? participantData.word : "";
+            if (theWordInput) {
+                theWordInput.value = savedWord;
+            }
+            // Switch to edit mode
+            if (theWordView) hide(theWordView);
+            if (theWordEdit) show(theWordEdit);
+            if (theWordInput) theWordInput.focus();
         });
     }
 

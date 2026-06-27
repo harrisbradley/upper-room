@@ -77,7 +77,15 @@
         <div id="the-word-section" class="mt-20" style="border-top:1px solid var(--border);padding-top:16px;">
           <strong style="font-size:.85rem;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);">The Word <span class="text-muted">(Participant)</span></strong>
           <p class="text-muted mt-4" style="font-size:.8rem;line-height:1.4;">Write down the single word or short phrase that stood out to you during the first or second reading.</p>
-          <div class="flex gap-8 mt-12">
+          
+          <!-- View mode -->
+          <div id="the-word-view" class="hidden" style="margin-top:12px;display:flex;align-items:center;gap:12px;">
+            <span id="the-word-display" style="font-size:1.15rem;font-weight:700;color:var(--success);"></span>
+            <button id="edit-the-word-btn" class="btn btn-ghost btn-sm" style="padding:4px 8px;font-size:.75rem;">Edit</button>
+          </div>
+
+          <!-- Edit mode -->
+          <div id="the-word-edit" class="flex gap-8 mt-12">
             <input type="text" id="the-word-input" placeholder="e.g. Unconditional" autocomplete="off" style="flex:1;margin:0;">
             <button id="save-the-word-btn" class="btn btn-primary" style="padding:0 16px;font-size:.9rem;">Save</button>
           </div>
@@ -203,7 +211,7 @@
 </main>
 
 <!-- App scripts -->
-<script type="module" src="js/app.js?v=13"></script>
+<script type="module" src="js/app.js?v=14"></script>
 <script type="module">initSession();</script>
 
 </body>
