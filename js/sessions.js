@@ -77,13 +77,13 @@ export async function updateSession(studyId, sessionId, { title, passageRef, que
 /**
  * Posts a recap to a session document.
  */
-export async function postRecap(studyId, sessionId, uid, { summary, keyTakeaways, prayerIntentions }) {
+export async function postRecap(studyId, sessionId, uid, { summary, keyTakeaways, prayerIntentions, postedAt }) {
     await updateDoc(doc(db, "studies", studyId, "sessions", sessionId), {
         recap: {
             summary,
             keyTakeaways:     keyTakeaways     || [],
             prayerIntentions: prayerIntentions || [],
-            postedAt:         serverTimestamp(),
+            postedAt:         postedAt         || serverTimestamp(),
             postedByUid:      uid,
         },
         updatedAt: serverTimestamp(),
