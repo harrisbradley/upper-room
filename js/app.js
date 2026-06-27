@@ -712,11 +712,23 @@ async function initSession() {
     const leaderNotesSec= qs("#leader-notes-section");
     const leaderNotesEl = qs("#leader-notes");
 
+    // Session Header section
+    const sessionHeaderSec= qs("#session-header-section");
+    const sessionDatetime = qs("#session-datetime");
+    const sessionFacilitator= qs("#session-facilitator");
+    const sessionBigIdea  = qs("#session-big-idea");
+    const datetimeContainer = qs("#datetime-container");
+    const facilitatorContainer = qs("#facilitator-container");
+    const bigIdeaContainer = qs("#big-idea-container");
+
     // Edit section
     const editSection   = qs("#edit-section");
     const editBtn       = qs("#edit-btn");
     const editForm      = qs("#edit-form");
     const editTitle     = qs("#edit-title");
+    const editDatetime  = qs("#edit-datetime");
+    const editFacilitator= qs("#edit-facilitator");
+    const editBigIdea   = qs("#edit-big-idea");
     const editPassage   = qs("#edit-passage");
     const editQuestions = qs("#edit-questions");
     const editNotes     = qs("#edit-leader-notes");
@@ -807,8 +819,59 @@ async function initSession() {
             show(leaderNotesSec);
         }
 
+        // Render header details
+        const dateTime = session.dateTime || "";
+        const facilitator = session.facilitator || "";
+        const bigIdea = session.bigIdea || "";
+
+        if (sessionDatetime) sessionDatetime.textContent = dateTime || "—";
+        if (sessionFacilitator) sessionFacilitator.textContent = facilitator || "—";
+        if (sessionBigIdea) sessionBigIdea.textContent = bigIdea || "—";
+
+        const hasHeaderData = dateTime || facilitator || bigIdea;
+        if (sessionHeaderSec) {
+            if (hasHeaderData || isLeader) {
+                show(sessionHeaderSec);
+                if (datetimeContainer) {
+                    if (dateTime) {
+                        show(datetimeContainer);
+                    } else if (isLeader) {
+                        show(datetimeContainer);
+                        sessionDatetime.textContent = "—";
+                    } else {
+                        hide(datetimeContainer);
+                    }
+                }
+                if (facilitatorContainer) {
+                    if (facilitator) {
+                        show(facilitatorContainer);
+                    } else if (isLeader) {
+                        show(facilitatorContainer);
+                        sessionFacilitator.textContent = "—";
+                    } else {
+                        hide(facilitatorContainer);
+                    }
+                }
+                if (bigIdeaContainer) {
+                    if (bigIdea) {
+                        show(bigIdeaContainer);
+                    } else if (isLeader) {
+                        show(bigIdeaContainer);
+                        sessionBigIdea.textContent = "—";
+                    } else {
+                        hide(bigIdeaContainer);
+                    }
+                }
+            } else {
+                hide(sessionHeaderSec);
+            }
+        }
+
         // Populate edit form
-        if (editTitle)     editTitle.value     = session.title || "";
+        if (editTitle)       editTitle.value       = session.title || "";
+        if (editDatetime)    editDatetime.value    = dateTime;
+        if (editFacilitator)  editFacilitator.value  = facilitator;
+        if (editBigIdea)      editBigIdea.value      = bigIdea;
         if (editPassage)   editPassage.value   = passageRef;
         if (editQuestions) editQuestions.value = questions.join("\n");
         if (editNotes)     editNotes.value     = notes;
@@ -877,6 +940,9 @@ async function initSession() {
         editForm.addEventListener("submit", async e => {
             e.preventDefault();
             const title     = editTitle ? editTitle.value.trim() : "";
+            const dateTime  = editDatetime ? editDatetime.value.trim() : "";
+            const facilitator = editFacilitator ? editFacilitator.value.trim() : "";
+            const bigIdea   = editBigIdea ? editBigIdea.value.trim() : "";
             const passage   = editPassage.value.trim();
             const questions = parseLines(editQuestions.value);
             const notes     = editNotes ? editNotes.value.trim() : "";
@@ -888,7 +954,16 @@ async function initSession() {
             saveEditBtn.disabled = true;
             saveEditBtn.textContent = "Saving…";
             try {
-                await updateSession(studyId, sessionId, { title, passageRef: passage, questions, leaderNotes: notes, completed });
+                await updateSession(studyId, sessionId, { 
+                    title, 
+                    passageRef: passage, 
+                    questions, 
+                    leaderNotes: notes, 
+                    completed,
+                    dateTime,
+                    facilitator,
+                    bigIdea
+                });
                 session = await getSession(studyId, sessionId);
                 renderSession();
                 show(editBtn);

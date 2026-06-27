@@ -39,6 +39,24 @@
 
       <h1 id="session-title" class="page-title">Session</h1>
 
+      <!-- Session Header Info -->
+      <div id="session-header-section" class="card mt-16 hidden">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 16px;">
+          <div id="datetime-container">
+            <strong style="font-size:.85rem;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);">Date & Time</strong>
+            <p id="session-datetime" style="margin-top:6px;font-size:.95rem;font-weight:500;">—</p>
+          </div>
+          <div id="facilitator-container">
+            <strong style="font-size:.85rem;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);">Leader / Facilitator</strong>
+            <p id="session-facilitator" style="margin-top:6px;font-size:.95rem;font-weight:500;">—</p>
+          </div>
+        </div>
+        <div id="big-idea-container" style="border-top: 1px solid var(--border); padding-top: 12px;">
+          <strong style="font-size:.85rem;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);">The Big Idea</strong>
+          <p id="session-big-idea" style="margin-top:6px;font-size:1rem;font-style:italic;white-space:pre-wrap;color:var(--primary);font-weight:500;">—</p>
+        </div>
+      </div>
+
       <!-- Scripture -->
       <div class="card">
         <div class="section-title">Scripture</div>
@@ -56,6 +74,18 @@
               <input type="text" id="edit-title" placeholder="e.g. Walking in the Spirit" autocomplete="off">
             </div>
             <div class="form-group">
+              <label for="edit-datetime">Date & Time <span class="text-muted">(optional)</span></label>
+              <input type="text" id="edit-datetime" placeholder="e.g. Tuesday, Jan 14 at 7:00 PM" autocomplete="off">
+            </div>
+            <div class="form-group">
+              <label for="edit-facilitator">Leader / Facilitator <span class="text-muted">(optional)</span></label>
+              <input type="text" id="edit-facilitator" placeholder="e.g. Brad Bradley" autocomplete="off">
+            </div>
+            <div class="form-group">
+              <label for="edit-big-idea">The Big Idea <span class="text-muted">(optional)</span></label>
+              <textarea id="edit-big-idea" rows="2" placeholder="The core focus or central message of the session"></textarea>
+            </div>
+            <div class="form-group">
               <label for="edit-passage">Scripture passage</label>
               <input type="text" id="edit-passage" placeholder="e.g. John 3:16-21" autocomplete="off">
             </div>
@@ -64,7 +94,7 @@
               <textarea id="edit-questions" rows="5"></textarea>
             </div>
             <div class="form-group">
-              <label for="edit-leader-notes">Leader notes <span class="text-muted">(private — only you see these)</span></label>
+              <label for="edit-leader-notes">Leader notes <span class="text-muted">(Organizer)</span></label>
               <textarea id="edit-leader-notes" rows="3"></textarea>
             </div>
             <div class="form-group" style="display:flex;align-items:center;gap:8px;margin-top:12px;margin-bottom:12px;">
@@ -88,7 +118,7 @@
 
       <!-- Leader Notes (leader only, read mode) -->
       <div id="leader-notes-section" class="card mt-16 hidden">
-        <div class="section-title">Your Notes <span class="text-muted" style="font-size:.7rem;text-transform:none;letter-spacing:0;">(private)</span></div>
+        <div class="section-title">Your Notes <span class="text-muted" style="font-size:.7rem;text-transform:none;letter-spacing:0;">(Organizer)</span></div>
         <p id="leader-notes" style="white-space:pre-wrap;font-size:.95rem;"></p>
       </div>
 
@@ -149,7 +179,7 @@
 </main>
 
 <!-- App scripts -->
-<script type="module" src="js/app.js?v=10"></script>
+<script type="module" src="js/app.js?v=12"></script>
 <script type="module">initSession();</script>
 
 </body>
