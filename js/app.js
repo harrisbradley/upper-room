@@ -736,6 +736,9 @@ async function initSession() {
     const recapSummaryEl= qs("#recap-summary-input");
     const recapTakeaways= qs("#recap-takeaways");
     const recapPrayers  = qs("#recap-prayers");
+    const editRecapSec  = qs("#edit-recap-section");
+    const editRecapBtn  = qs("#edit-recap-btn");
+    const recapFormTitle = qs("#recap-form-title");
 
     let currentUser = null;
     let isLeader    = false;
@@ -818,7 +821,13 @@ async function initSession() {
     function renderRecap() {
         if (!session.recap) {
             hide(recapViewSec);
-            if (isLeader && recapFormSec) show(recapFormSec);
+            if (isLeader && recapFormSec) {
+                show(recapFormSec);
+                show(postRecapBtn);
+                hide(recapForm);
+                if (recapFormTitle) recapFormTitle.textContent = "Post a Recap";
+                if (saveRecapBtn) saveRecapBtn.textContent = "Post Recap";
+            }
             return;
         }
         // Has recap — show view
@@ -837,6 +846,13 @@ async function initSession() {
         }
         if (recapPrayersEl) {
             recapPrayersEl.innerHTML = (r.prayerIntentions || []).map(p => `<li>${escapeHtml(p)}</li>`).join("") || "<li>—</li>";
+        }
+
+        // Show/hide edit button based on leader status
+        if (isLeader && editRecapSec) {
+            show(editRecapSec);
+        } else if (editRecapSec) {
+            hide(editRecapSec);
         }
     }
 
@@ -889,16 +905,47 @@ async function initSession() {
     // Recap form (leader only, no recap yet)
     if (isLeader && postRecapBtn) {
         postRecapBtn.addEventListener("click", () => {
+            if (recapFormTitle) recapFormTitle.textContent = "Post a Recap";
+            if (saveRecapBtn) saveRecapBtn.textContent = "Post Recap";
             hide(postRecapBtn);
             show(recapForm);
             if (recapSummaryEl) recapSummaryEl.focus();
         });
     }
 
+    if (isLeader && editRecapBtn) {
+        editRecapBtn.addEventListener("click", () => {
+            const r = session.recap || {};
+            // Populate form
+            if (recapSummaryEl) recapSummaryEl.value = r.summary || "";
+            if (recapTakeaways) recapTakeaways.value = (r.keyTakeaways || []).join("\n");
+            if (recapPrayers) recapPrayers.value = (r.prayerIntentions || []).join("\n");
+
+            // Adjust form UI for editing
+            if (recapFormTitle) recapFormTitle.textContent = "Edit Recap";
+            if (saveRecapBtn) saveRecapBtn.textContent = "Save Changes";
+
+            // Toggle visibility
+            hide(recapViewSec);
+            show(recapFormSec);
+            hide(postRecapBtn);
+            show(recapForm);
+
+            if (recapSummaryEl) recapSummaryEl.focus();
+        });
+    }
+
     if (cancelRecap) {
         cancelRecap.addEventListener("click", () => {
-            show(postRecapBtn);
-            hide(recapForm);
+            if (session.recap) {
+                // If there's already a recap, return to the read view
+                hide(recapFormSec);
+                show(recapViewSec);
+            } else {
+                // Otherwise return to the "Post Recap" button state
+                show(postRecapBtn);
+                hide(recapForm);
+            }
             hide(recapMsg);
         });
     }
@@ -913,15 +960,16 @@ async function initSession() {
             if (summary.length > 500) { setError(recapMsg, "Summary cannot be longer than 500 characters."); return; }
             hide(recapMsg);
             saveRecapBtn.disabled = true;
-            saveRecapBtn.textContent = "Posting…";
+            saveRecapBtn.textContent = session.recap ? "Saving…" : "Posting…";
+            const postedAt = session.recap ? session.recap.postedAt : null;
             try {
-                await postRecap(studyId, sessionId, currentUser.uid, { summary, keyTakeaways, prayerIntentions });
+                await postRecap(studyId, sessionId, currentUser.uid, { summary, keyTakeaways, prayerIntentions, postedAt });
                 session = await getSession(studyId, sessionId);
                 renderSession();
             } catch (err) {
-                setError(recapMsg, err.message || "Failed to post recap.");
+                setError(recapMsg, err.message || "Failed to save recap.");
                 saveRecapBtn.disabled = false;
-                saveRecapBtn.textContent = "Post Recap";
+                saveRecapBtn.textContent = session.recap ? "Save Changes" : "Post Recap";
             }
         });
     }

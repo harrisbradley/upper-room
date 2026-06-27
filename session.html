@@ -96,6 +96,9 @@
       <div id="recap-view" class="card mt-16 hidden">
         <div class="section-title" style="color:var(--success);">Session Recap</div>
         <p class="text-muted mt-4" style="font-size:.8rem;">Posted <span id="recap-date"></span></p>
+        <div id="edit-recap-section" class="hidden" style="margin-top: 8px;">
+          <button id="edit-recap-btn" class="btn btn-ghost btn-sm">Edit recap</button>
+        </div>
 
         <div class="mt-12">
           <strong style="font-size:.85rem;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);">Summary</strong>
@@ -115,7 +118,7 @@
 
       <!-- Recap: post form (leader only, no recap yet) -->
       <div id="recap-form-section" class="card mt-16 hidden">
-        <div class="section-title">Post a Recap</div>
+        <div id="recap-form-title" class="section-title">Post a Recap</div>
         <p class="text-muted mb-16">Share a summary of what was discussed.</p>
 
         <button id="post-recap-btn" class="btn btn-accent">+ Post Recap</button>
@@ -146,7 +149,7 @@
 </main>
 
 <!-- App scripts -->
-<script type="module" src="js/app.js?v=9"></script>
+<script type="module" src="js/app.js?v=10"></script>
 <script type="module">initSession();</script>
 
 </body>
