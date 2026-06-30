@@ -9,6 +9,7 @@ import {
     getDoc, 
     getDocs, 
     updateDoc, 
+    setDoc,
     query, 
     orderBy, 
     serverTimestamp 
@@ -58,10 +59,11 @@ export async function createSession(studyId, title, passageRef, questions) {
 /**
  * Updates the editable fields of a session (scripture, questions, notes, completion).
  */
-export async function updateSession(studyId, sessionId, { title, passageRef, questions, leaderNotes, completed, dateTime, facilitator, bigIdea }) {
+export async function updateSession(studyId, sessionId, { title, passageRef, questions, leaderNotes, completed, dateTime, facilitator, bigIdea, passageText }) {
     const updateData = {
         title:              title || passageRef || "Session",
         "passage.reference": passageRef || "",
+        "passage.text":      passageText || "",
         "agenda.questions":  questions  || [],
         "agenda.leaderNotes": leaderNotes || "",
         dateTime:           dateTime || "",
@@ -94,4 +96,24 @@ export async function postRecap(studyId, sessionId, uid, { summary, keyTakeaways
         },
         updatedAt: serverTimestamp(),
     });
+}
+
+/**
+ * Retrieves the participant data (answers, notes) for a specific user and session.
+ */
+export async function getParticipantData(studyId, sessionId, uid) {
+    const snap = await getDoc(doc(db, "studies", studyId, "sessions", sessionId, "participantData", uid));
+    if (!snap.exists()) return null;
+    return snap.data();
+}
+
+/**
+ * Updates participant data (answers, notes) for a specific user and session.
+ */
+export async function updateParticipantData(studyId, sessionId, uid, data) {
+    const ref = doc(db, "studies", studyId, "sessions", sessionId, "participantData", uid);
+    await setDoc(ref, {
+        ...data,
+        updatedAt: serverTimestamp()
+    }, { merge: true });
 }

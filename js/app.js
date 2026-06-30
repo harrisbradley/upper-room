@@ -37,7 +37,9 @@ import {
     getSession, 
     createSession, 
     updateSession, 
-    postRecap 
+    postRecap,
+    getParticipantData,
+    updateParticipantData 
 } from "./sessions.js";
 
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
@@ -708,9 +710,20 @@ async function initSession() {
     const studyLinkEl   = qs("#study-link");
     const sessionTitleEl= qs("#session-title");
     const passageEl     = qs("#passage-ref");
+    const passageTextContainer= qs("#passage-text-container");
+    const passageTextEl = qs("#passage-text");
+    const theWordView   = qs("#the-word-view");
+    const theWordEdit   = qs("#the-word-edit");
+    const theWordDisplay= qs("#the-word-display");
+    const theWordInput  = qs("#the-word-input");
+    const saveTheWordBtn= qs("#save-the-word-btn");
+    const editTheWordBtn= qs("#edit-the-word-btn");
+    const theWordMsg    = qs("#the-word-msg");
     const questionsEl   = qs("#questions-list");
     const leaderNotesSec= qs("#leader-notes-section");
     const leaderNotesEl = qs("#leader-notes");
+    const lectioViewSec = qs("#lectio-view-section");
+    const questionsSec  = qs("#questions-section");
 
     // Session Header section
     const sessionHeaderSec= qs("#session-header-section");
@@ -730,6 +743,7 @@ async function initSession() {
     const editFacilitator= qs("#edit-facilitator");
     const editBigIdea   = qs("#edit-big-idea");
     const editPassage   = qs("#edit-passage");
+    const editPassageText= qs("#edit-passage-text");
     const editQuestions = qs("#edit-questions");
     const editNotes     = qs("#edit-leader-notes");
     const editCompleted = qs("#edit-completed");
@@ -767,11 +781,17 @@ async function initSession() {
     // Set study link
     if (studyLinkEl) studyLinkEl.href = `study.html?id=${studyId}`;
 
-    // Load session + role
+    let participantData = null;
+
+    // Load session + role + participant data
     try {
-        [session] = await Promise.all([
+        const [loadedSession, loadedParticipantData] = await Promise.all([
             getSession(studyId, sessionId),
+            getParticipantData(studyId, sessionId, currentUser.uid)
         ]);
+        session = loadedSession;
+        participantData = loadedParticipantData;
+
         if (!session) {
             hide(loadingEl);
             setError(errorEl, "Session not found.");
@@ -804,6 +824,31 @@ async function initSession() {
             }
         }
 
+        // Render scripture Focus and Text
+        const passageText = (session.passage && session.passage.text) ? session.passage.text : "";
+        if (passageTextEl) {
+            if (passageText) {
+                passageTextEl.textContent = passageText;
+                if (passageTextContainer) show(passageTextContainer);
+            } else {
+                if (passageTextContainer) hide(passageTextContainer);
+            }
+        }
+
+        // Render participant "The Word" box
+        const savedWord = (participantData && participantData.word) ? participantData.word : "";
+        if (savedWord) {
+            // View mode
+            if (theWordDisplay) theWordDisplay.textContent = `"${savedWord}"`;
+            if (theWordView) show(theWordView);
+            if (theWordEdit) hide(theWordEdit);
+        } else {
+            // Edit mode
+            if (theWordInput) theWordInput.value = "";
+            if (theWordView) hide(theWordView);
+            if (theWordEdit) show(theWordEdit);
+        }
+
         if (questionsEl) {
             if (questions.length) {
                 questionsEl.innerHTML = questions.map(q =>
@@ -817,6 +862,8 @@ async function initSession() {
         if (isLeader && notes && leaderNotesSec) {
             if (leaderNotesEl) leaderNotesEl.textContent = notes;
             show(leaderNotesSec);
+        } else if (leaderNotesSec) {
+            hide(leaderNotesSec);
         }
 
         // Render header details
@@ -873,6 +920,7 @@ async function initSession() {
         if (editFacilitator)  editFacilitator.value  = facilitator;
         if (editBigIdea)      editBigIdea.value      = bigIdea;
         if (editPassage)   editPassage.value   = passageRef;
+        if (editPassageText)  editPassageText.value  = passageText;
         if (editQuestions) editQuestions.value = questions.join("\n");
         if (editNotes)     editNotes.value     = notes;
         if (editCompleted) editCompleted.checked = !!session.completed;
@@ -928,6 +976,18 @@ async function initSession() {
         editBtn.addEventListener("click", () => {
             hide(editBtn);
             show(editForm);
+            
+            // Hide other read-only display sections during editing
+            if (sessionHeaderSec) hide(sessionHeaderSec);
+            if (lectioViewSec) hide(lectioViewSec);
+            if (questionsSec) hide(questionsSec);
+            if (leaderNotesSec) hide(leaderNotesSec);
+            if (recapViewSec) hide(recapViewSec);
+            if (recapFormSec) hide(recapFormSec);
+            
+            // Set title to "Edit Session"
+            if (sessionTitleEl) sessionTitleEl.textContent = "Edit Session";
+            
             editPassage.focus();
         });
 
@@ -935,6 +995,13 @@ async function initSession() {
             show(editBtn);
             hide(editForm);
             hide(editMsg);
+            
+            // Restore visibility of standard view sections
+            if (lectioViewSec) show(lectioViewSec);
+            if (questionsSec) show(questionsSec);
+            
+            // renderSession will restore the rest (title, header, notes, recap)
+            renderSession();
         });
 
         editForm.addEventListener("submit", async e => {
@@ -944,6 +1011,7 @@ async function initSession() {
             const facilitator = editFacilitator ? editFacilitator.value.trim() : "";
             const bigIdea   = editBigIdea ? editBigIdea.value.trim() : "";
             const passage   = editPassage.value.trim();
+            const passageText = editPassageText ? editPassageText.value.trim() : "";
             const questions = parseLines(editQuestions.value);
             const notes     = editNotes ? editNotes.value.trim() : "";
             const completed = editCompleted ? editCompleted.checked : false;
@@ -962,9 +1030,15 @@ async function initSession() {
                     completed,
                     dateTime,
                     facilitator,
-                    bigIdea
+                    bigIdea,
+                    passageText
                 });
                 session = await getSession(studyId, sessionId);
+                
+                // Restore visibility of standard view sections
+                if (lectioViewSec) show(lectioViewSec);
+                if (questionsSec) show(questionsSec);
+                
                 renderSession();
                 show(editBtn);
                 hide(editForm);
@@ -974,6 +1048,49 @@ async function initSession() {
                 saveEditBtn.disabled = false;
                 saveEditBtn.textContent = "Save Changes";
             }
+        });
+    }
+
+    // Participant: The Word
+    if (saveTheWordBtn) {
+        saveTheWordBtn.addEventListener("click", async () => {
+            const word = (theWordInput && theWordInput.value.trim()) || "";
+            if (!word) { setError(theWordMsg, "Please enter a word or phrase."); return; }
+            hide(theWordMsg);
+            saveTheWordBtn.disabled = true;
+            saveTheWordBtn.textContent = "Saving…";
+            try {
+                await updateParticipantData(studyId, sessionId, currentUser.uid, { word });
+                participantData = { ...participantData, word };
+                
+                // Show view mode and hide edit mode
+                if (theWordDisplay) theWordDisplay.textContent = `"${word}"`;
+                if (theWordView) show(theWordView);
+                if (theWordEdit) hide(theWordEdit);
+                
+                setSuccess(theWordMsg, "Saved!");
+                setTimeout(() => {
+                    hide(theWordMsg);
+                }, 2500);
+            } catch (err) {
+                setError(theWordMsg, err.message || "Failed to save.");
+            } finally {
+                saveTheWordBtn.disabled = false;
+                saveTheWordBtn.textContent = "Save";
+            }
+        });
+    }
+
+    if (editTheWordBtn) {
+        editTheWordBtn.addEventListener("click", () => {
+            const savedWord = (participantData && participantData.word) ? participantData.word : "";
+            if (theWordInput) {
+                theWordInput.value = savedWord;
+            }
+            // Switch to edit mode
+            if (theWordView) hide(theWordView);
+            if (theWordEdit) show(theWordEdit);
+            if (theWordInput) theWordInput.focus();
         });
     }
 
