@@ -59,37 +59,40 @@
 
       <!-- Lectio (Scripture) -->
       <div class="card">
-        <div class="section-title">Lectio</div>
-        
-        <div class="mt-12">
-          <strong style="font-size:.85rem;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);">Scripture Focus</strong>
-          <div class="scripture-block mt-6">
-            <div id="passage-ref" class="scripture-ref">—</div>
-          </div>
-        </div>
-
-        <div id="passage-text-container" class="mt-16 hidden">
-          <strong style="font-size:.85rem;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);">The Text</strong>
-          <div id="passage-text" style="white-space:pre-wrap;line-height:2.2;padding:16px;background:var(--input-bg);border:1px solid var(--border);border-radius:var(--radius);min-height:60px;margin-top:8px;font-size:1.05rem;"></div>
-        </div>
-
-        <!-- The Word Box (Participant) -->
-        <div id="the-word-section" class="mt-20" style="border-top:1px solid var(--border);padding-top:16px;">
-          <strong style="font-size:.85rem;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);">The Word <span class="text-muted">(Participant)</span></strong>
-          <p class="text-muted mt-4" style="font-size:.8rem;line-height:1.4;">Write down the single word or short phrase that stood out to you during the first or second reading.</p>
+        <div id="lectio-view-section">
+          <div class="section-title" style="font-size: 1.6rem;">Lectio</div>
+          <p class="text-muted mt-4" style="font-size:.85rem;line-height:1.4;margin-bottom:12px;">Lectio is the practice of slow, meditative listening. Instead of skimming scripture for facts or studying it for a test, we quiet our minds to notice the single word or phrase that captures our attention today.</p>
           
-          <!-- View mode -->
-          <div id="the-word-view" class="hidden" style="margin-top:12px;display:flex;align-items:center;gap:12px;">
-            <span id="the-word-display" style="font-size:1.15rem;font-weight:700;color:var(--success);"></span>
-            <button id="edit-the-word-btn" class="btn btn-ghost btn-sm" style="padding:4px 8px;font-size:.75rem;">Edit</button>
+          <div class="mt-12">
+            <strong style="font-size:.85rem;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);">Scripture Focus</strong>
+            <div class="scripture-block mt-6">
+              <div id="passage-ref" class="scripture-ref">—</div>
+            </div>
           </div>
 
-          <!-- Edit mode -->
-          <div id="the-word-edit" class="flex gap-8 mt-12">
-            <input type="text" id="the-word-input" placeholder="e.g. Unconditional" autocomplete="off" style="flex:1;margin:0;">
-            <button id="save-the-word-btn" class="btn btn-primary" style="padding:0 16px;font-size:.9rem;">Save</button>
+          <div id="passage-text-container" class="mt-16 hidden">
+            <strong style="font-size:.85rem;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);">The Reading</strong>
+            <div id="passage-text" style="white-space:pre-wrap;line-height:2.2;padding:16px;background:var(--input-bg);border:1px solid var(--border);border-radius:var(--radius);min-height:60px;margin-top:8px;font-size:1.05rem;"></div>
           </div>
-          <div id="the-word-msg" class="msg hidden" style="margin-top:8px;"></div>
+
+          <!-- The Word Box (Participant) -->
+          <div id="the-word-section" class="mt-20" style="border-top:1px solid var(--border);padding-top:16px;">
+            <strong style="font-size:.85rem;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);">What Stood Out? <span class="text-muted">(Participant)</span></strong>
+            <p class="text-muted mt-4" style="font-size:.8rem;line-height:1.4;">Write down the single word or short phrase that stood out to you during the first or second reading.</p>
+            
+            <!-- View mode -->
+            <div id="the-word-view" class="hidden" style="margin-top:12px;display:flex;align-items:center;gap:12px;">
+              <span id="the-word-display" style="font-size:1.15rem;font-weight:700;color:var(--success);"></span>
+              <button id="edit-the-word-btn" class="btn btn-ghost btn-sm" style="padding:4px 8px;font-size:.75rem;">Edit</button>
+            </div>
+
+            <!-- Edit mode -->
+            <div id="the-word-edit" class="flex gap-8 mt-12">
+              <input type="text" id="the-word-input" placeholder="e.g. Unconditional" autocomplete="off" style="flex:1;margin:0;">
+              <button id="save-the-word-btn" class="btn btn-primary" style="padding:0 16px;font-size:.9rem;">Save</button>
+            </div>
+            <div id="the-word-msg" class="msg hidden" style="margin-top:8px;"></div>
+          </div>
         </div>
 
         <!-- Edit button (leader only) -->
@@ -97,6 +100,8 @@
           <button id="edit-btn" class="btn btn-ghost btn-sm">Edit session</button>
 
           <form id="edit-form" class="hidden" style="margin-top:16px;">
+            <div class="section-title">Session Details</div>
+            
             <div class="form-group">
               <label for="edit-title">Session name <span class="text-muted">(optional)</span></label>
               <input type="text" id="edit-title" placeholder="e.g. Walking in the Spirit" autocomplete="off">
@@ -113,6 +118,10 @@
               <label for="edit-big-idea">The Big Idea <span class="text-muted">(optional)</span></label>
               <textarea id="edit-big-idea" rows="2" placeholder="The core focus or central message of the session"></textarea>
             </div>
+
+            <div class="section-title mt-24" style="border-top:1px solid var(--border); padding-top:16px; font-size: 1.6rem;">Lectio</div>
+            <p class="text-muted mt-4" style="font-size:.85rem;line-height:1.4;margin-bottom:12px;">Lectio is the practice of slow, meditative listening. Instead of skimming scripture for facts or studying it for a test, we quiet our minds to notice the single word or phrase that captures our attention today.</p>
+
             <div class="form-group">
               <label for="edit-passage">Scripture passage</label>
               <input type="text" id="edit-passage" placeholder="e.g. John 3:16-21" autocomplete="off">
@@ -121,14 +130,23 @@
               <label for="edit-passage-text">Scripture Text <span class="text-muted">(Organizer)</span></label>
               <textarea id="edit-passage-text" rows="6" placeholder="Paste the scripture text here for double-spaced reading..."></textarea>
             </div>
+
+            <div class="section-title mt-24" style="border-top:1px solid var(--border); padding-top:16px;">Discussion Questions</div>
+
             <div class="form-group">
               <label for="edit-questions">Discussion questions <span class="text-muted">(one per line)</span></label>
               <textarea id="edit-questions" rows="5"></textarea>
             </div>
+
+            <div class="section-title mt-24" style="border-top:1px solid var(--border); padding-top:16px;">Leader Notes</div>
+
             <div class="form-group">
               <label for="edit-leader-notes">Leader notes <span class="text-muted">(Organizer)</span></label>
               <textarea id="edit-leader-notes" rows="3"></textarea>
             </div>
+
+            <div class="section-title mt-24" style="border-top:1px solid var(--border); padding-top:16px;">Settings</div>
+
             <div class="form-group" style="display:flex;align-items:center;gap:8px;margin-top:12px;margin-bottom:12px;">
               <input type="checkbox" id="edit-completed" style="width:auto;margin:0;cursor:pointer;">
               <label for="edit-completed" style="margin:0;font-weight:normal;cursor:pointer;">Mark session as completed</label>
@@ -143,7 +161,7 @@
       </div>
 
       <!-- Discussion Questions -->
-      <div class="card mt-16">
+      <div id="questions-section" class="card mt-16">
         <div class="section-title">Discussion Questions</div>
         <ol id="questions-list" class="question-list"></ol>
       </div>
@@ -211,7 +229,7 @@
 </main>
 
 <!-- App scripts -->
-<script type="module" src="js/app.js?v=14"></script>
+<script type="module" src="js/app.js?v=15"></script>
 <script type="module">initSession();</script>
 
 </body>

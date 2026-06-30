@@ -722,6 +722,8 @@ async function initSession() {
     const questionsEl   = qs("#questions-list");
     const leaderNotesSec= qs("#leader-notes-section");
     const leaderNotesEl = qs("#leader-notes");
+    const lectioViewSec = qs("#lectio-view-section");
+    const questionsSec  = qs("#questions-section");
 
     // Session Header section
     const sessionHeaderSec= qs("#session-header-section");
@@ -860,6 +862,8 @@ async function initSession() {
         if (isLeader && notes && leaderNotesSec) {
             if (leaderNotesEl) leaderNotesEl.textContent = notes;
             show(leaderNotesSec);
+        } else if (leaderNotesSec) {
+            hide(leaderNotesSec);
         }
 
         // Render header details
@@ -972,6 +976,18 @@ async function initSession() {
         editBtn.addEventListener("click", () => {
             hide(editBtn);
             show(editForm);
+            
+            // Hide other read-only display sections during editing
+            if (sessionHeaderSec) hide(sessionHeaderSec);
+            if (lectioViewSec) hide(lectioViewSec);
+            if (questionsSec) hide(questionsSec);
+            if (leaderNotesSec) hide(leaderNotesSec);
+            if (recapViewSec) hide(recapViewSec);
+            if (recapFormSec) hide(recapFormSec);
+            
+            // Set title to "Edit Session"
+            if (sessionTitleEl) sessionTitleEl.textContent = "Edit Session";
+            
             editPassage.focus();
         });
 
@@ -979,6 +995,13 @@ async function initSession() {
             show(editBtn);
             hide(editForm);
             hide(editMsg);
+            
+            // Restore visibility of standard view sections
+            if (lectioViewSec) show(lectioViewSec);
+            if (questionsSec) show(questionsSec);
+            
+            // renderSession will restore the rest (title, header, notes, recap)
+            renderSession();
         });
 
         editForm.addEventListener("submit", async e => {
@@ -1011,6 +1034,11 @@ async function initSession() {
                     passageText
                 });
                 session = await getSession(studyId, sessionId);
+                
+                // Restore visibility of standard view sections
+                if (lectioViewSec) show(lectioViewSec);
+                if (questionsSec) show(questionsSec);
+                
                 renderSession();
                 show(editBtn);
                 hide(editForm);
