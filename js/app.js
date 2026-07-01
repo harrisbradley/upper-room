@@ -1148,6 +1148,8 @@ async function initSession() {
             
             if (hitsHomeStatus) {
                 hitsHomeStatus.textContent = "Saving…";
+                hitsHomeStatus.style.color = "var(--accent)";
+                hitsHomeStatus.style.fontWeight = "600";
                 show(hitsHomeStatus);
             }
             try {
@@ -1156,6 +1158,8 @@ async function initSession() {
                 lastSavedNotes = val;
                 if (hitsHomeStatus) {
                     hitsHomeStatus.textContent = "Saved";
+                    hitsHomeStatus.style.color = "var(--success)";
+                    hitsHomeStatus.style.fontWeight = "600";
                     setTimeout(() => {
                         if (hitsHomeStatus.textContent === "Saved") {
                             hide(hitsHomeStatus);
@@ -1166,6 +1170,8 @@ async function initSession() {
                 console.error("Autosave failed:", err);
                 if (hitsHomeStatus) {
                     hitsHomeStatus.textContent = "Error saving";
+                    hitsHomeStatus.style.color = "var(--error)";
+                    hitsHomeStatus.style.fontWeight = "600";
                 }
             }
         };
@@ -1173,6 +1179,8 @@ async function initSession() {
         hitsHomeInput.addEventListener("input", () => {
             if (hitsHomeStatus) {
                 hitsHomeStatus.textContent = "Saving…";
+                hitsHomeStatus.style.color = "var(--accent)";
+                hitsHomeStatus.style.fontWeight = "600";
                 show(hitsHomeStatus);
             }
             clearTimeout(debounceTimer);
