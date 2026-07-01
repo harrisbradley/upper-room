@@ -725,6 +725,18 @@ async function initSession() {
     const lectioViewSec = qs("#lectio-view-section");
     const questionsSec  = qs("#questions-section");
 
+    // Meditatio section
+    const meditatioCard = qs("#meditatio-card");
+    const reflectionDisplayTitle = qs("#reflection-display-title");
+    const reflectionDisplayBody = qs("#reflection-display-body");
+    const hitsHomeInput = qs("#hits-home-input");
+    const hitsHomeStatus = qs("#hits-home-status");
+    const meditatioInfoCard = qs("#meditatio-info-card");
+    const closeMeditatioInfo = qs("#close-meditatio-info");
+
+    const editReflectionTitle = qs("#edit-reflection-title");
+    const editReflectionBody  = qs("#edit-reflection-body");
+
     // Session Header section
     const sessionHeaderSec= qs("#session-header-section");
     const sessionDatetime = qs("#session-datetime");
@@ -769,6 +781,7 @@ async function initSession() {
     let currentUser = null;
     let isLeader    = false;
     let session     = null;
+    let lastSavedNotes = "";
 
     try {
         currentUser = await ensureAnonymousAuth();
@@ -924,6 +937,29 @@ async function initSession() {
         if (editQuestions) editQuestions.value = questions.join("\n");
         if (editNotes)     editNotes.value     = notes;
         if (editCompleted) editCompleted.checked = !!session.completed;
+        if (editReflectionTitle) editReflectionTitle.value = session.reflectionTitle || "";
+        if (editReflectionBody)  editReflectionBody.value  = session.reflectionBody || "";
+
+        // Render Meditatio (Reflection)
+        const refTitle = session.reflectionTitle || "The Reflection";
+        const refBody  = session.reflectionBody  || "";
+        
+        if (meditatioCard) {
+            if (refBody) {
+                show(meditatioCard);
+                if (reflectionDisplayTitle) reflectionDisplayTitle.textContent = refTitle;
+                if (reflectionDisplayBody) reflectionDisplayBody.textContent = refBody;
+                
+                // Load participant's hitsHomeNotes
+                const savedNotes = (participantData && participantData.hitsHomeNotes) ? participantData.hitsHomeNotes : "";
+                if (hitsHomeInput) {
+                    hitsHomeInput.value = savedNotes;
+                    lastSavedNotes = savedNotes;
+                }
+            } else {
+                hide(meditatioCard);
+            }
+        }
 
         // Render recap
         renderRecap();
@@ -984,6 +1020,7 @@ async function initSession() {
             if (leaderNotesSec) hide(leaderNotesSec);
             if (recapViewSec) hide(recapViewSec);
             if (recapFormSec) hide(recapFormSec);
+            if (meditatioCard) hide(meditatioCard);
             
             // Set title to "Edit Session"
             if (sessionTitleEl) sessionTitleEl.textContent = "Edit Session";
@@ -1015,6 +1052,11 @@ async function initSession() {
             const questions = parseLines(editQuestions.value);
             const notes     = editNotes ? editNotes.value.trim() : "";
             const completed = editCompleted ? editCompleted.checked : false;
+            
+            // New Meditatio fields
+            const reflectionTitle = editReflectionTitle ? editReflectionTitle.value.trim() : "";
+            const reflectionBody  = editReflectionBody ? editReflectionBody.value.trim() : "";
+            
             if (!passage) { setError(editMsg, "Please enter a scripture passage."); return; }
             if (passage.length > 100) { setError(editMsg, "Passage reference cannot be longer than 100 characters."); return; }
             if (questions.length === 0) { setError(editMsg, "Please enter at least one discussion question."); return; }
@@ -1031,7 +1073,9 @@ async function initSession() {
                     dateTime,
                     facilitator,
                     bigIdea,
-                    passageText
+                    passageText,
+                    reflectionTitle,
+                    reflectionBody
                 });
                 session = await getSession(studyId, sessionId);
                 
@@ -1091,6 +1135,72 @@ async function initSession() {
             if (theWordView) hide(theWordView);
             if (theWordEdit) show(theWordEdit);
             if (theWordInput) theWordInput.focus();
+        });
+    }
+
+    // Participant: Meditatio private notes autosave
+    if (hitsHomeInput) {
+        let debounceTimer;
+
+        const saveNotes = async () => {
+            const val = hitsHomeInput.value;
+            if (val === lastSavedNotes) return; // No change, don't save
+            
+            if (hitsHomeStatus) {
+                hitsHomeStatus.textContent = "Saving…";
+                hitsHomeStatus.style.color = "var(--accent)";
+                hitsHomeStatus.style.fontWeight = "600";
+                show(hitsHomeStatus);
+            }
+            try {
+                await updateParticipantData(studyId, sessionId, currentUser.uid, { hitsHomeNotes: val });
+                participantData = { ...participantData, hitsHomeNotes: val };
+                lastSavedNotes = val;
+                if (hitsHomeStatus) {
+                    hitsHomeStatus.textContent = "Saved";
+                    hitsHomeStatus.style.color = "var(--success)";
+                    hitsHomeStatus.style.fontWeight = "600";
+                    setTimeout(() => {
+                        if (hitsHomeStatus.textContent === "Saved") {
+                            hide(hitsHomeStatus);
+                        }
+                    }, 2000);
+                }
+            } catch (err) {
+                console.error("Autosave failed:", err);
+                if (hitsHomeStatus) {
+                    hitsHomeStatus.textContent = "Error saving";
+                    hitsHomeStatus.style.color = "var(--error)";
+                    hitsHomeStatus.style.fontWeight = "600";
+                }
+            }
+        };
+
+        hitsHomeInput.addEventListener("input", () => {
+            if (hitsHomeStatus) {
+                hitsHomeStatus.textContent = "Saving…";
+                hitsHomeStatus.style.color = "var(--accent)";
+                hitsHomeStatus.style.fontWeight = "600";
+                show(hitsHomeStatus);
+            }
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(saveNotes, 1000);
+        });
+
+        hitsHomeInput.addEventListener("blur", () => {
+            clearTimeout(debounceTimer);
+            saveNotes();
+        });
+    }
+
+    // Meditatio Info Card dismissal
+    if (closeMeditatioInfo && meditatioInfoCard) {
+        if (localStorage.getItem("meditatio-info-dismissed") === "true") {
+            hide(meditatioInfoCard);
+        }
+        closeMeditatioInfo.addEventListener("click", () => {
+            hide(meditatioInfoCard);
+            localStorage.setItem("meditatio-info-dismissed", "true");
         });
     }
 

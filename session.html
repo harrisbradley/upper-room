@@ -131,6 +131,19 @@
               <textarea id="edit-passage-text" rows="6" placeholder="Paste the scripture text here for double-spaced reading..."></textarea>
             </div>
 
+            <div class="section-title mt-24" style="border-top:1px solid var(--border); padding-top:16px;">Meditatio</div>
+            <p class="text-muted mt-4" style="font-size:.85rem;line-height:1.4;margin-bottom:12px;">
+              <strong>Organizer Tip:</strong> Keep the reflection to 2 or 3 short, punchy paragraphs. Focus on a vulnerability or a practical tension that dads can immediately relate to.
+            </p>
+            <div class="form-group">
+              <label for="edit-reflection-title">Reflection Title <span class="text-muted">(optional)</span></label>
+              <input type="text" id="edit-reflection-title" placeholder="e.g. Resting as a Son" autocomplete="off">
+            </div>
+            <div class="form-group">
+              <label for="edit-reflection-body">Reflection Body <span class="text-muted">(optional)</span></label>
+              <textarea id="edit-reflection-body" rows="6" placeholder="Write a 2 or 3 paragraph reflection focusing on vulnerability or a practical tension..."></textarea>
+            </div>
+
             <div class="section-title mt-24" style="border-top:1px solid var(--border); padding-top:16px;">Discussion Questions</div>
 
             <div class="form-group">
@@ -157,6 +170,32 @@
               <button type="button" id="cancel-edit" class="btn btn-ghost">Cancel</button>
             </div>
           </form>
+        </div>
+      </div>
+
+      <!-- Meditatio (Reflection) -->
+      <div id="meditatio-card" class="card mt-16 hidden">
+        <div class="section-title" style="font-size: 1.6rem;">Meditatio</div>
+        
+        <!-- Helper / Educational Card -->
+        <div id="meditatio-info-card" class="msg msg-info mt-12" style="position: relative; padding-right: 32px;">
+          <strong>What is Meditatio?</strong> Meditatio is the practice of pondering. We read a modern reflection slowly to see where the ancient truth collides with our actual, messy lives today.
+          <button type="button" id="close-meditatio-info" style="position: absolute; right: 10px; top: 10px; background: none; border: none; font-size: 1.2rem; cursor: pointer; color: var(--text-muted);">&times;</button>
+        </div>
+
+        <div class="mt-16">
+          <h3 id="reflection-display-title" style="font-family: Georgia, Cambria, 'Times New Roman', Times, serif; font-size: 1.35rem; font-weight: 700; color: var(--primary); margin-bottom: 12px;">The Reflection</h3>
+          <div id="reflection-display-body" style="white-space: pre-wrap; line-height: 1.6; font-size: 1.05rem; color: var(--text); padding-bottom: 16px;"></div>
+        </div>
+
+        <!-- Where It Hits Home Notes (Participant Private Input) -->
+        <div class="mt-20" style="border-top:1px solid var(--border); padding-top:16px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <strong style="font-size:.85rem;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);">Where does this hit home?</strong>
+            <span id="hits-home-status" class="text-muted hidden" style="font-size:0.75rem;">Saved</span>
+          </div>
+          <p class="text-muted mt-4" style="font-size:.8rem;line-height:1.4;">Read the reflection slowly. Write down where this truth hits home in your current season of fatherhood.</p>
+          <textarea id="hits-home-input" rows="4" class="mt-12" placeholder="Capture your raw, private thoughts here..." style="width:100%; box-sizing:border-box;"></textarea>
         </div>
       </div>
 
@@ -229,7 +268,7 @@
 </main>
 
 <!-- App scripts -->
-<script type="module" src="js/app.js?v=15"></script>
+<script type="module" src="js/app.js?v=18"></script>
 <script type="module">initSession();</script>
 
 </body>
