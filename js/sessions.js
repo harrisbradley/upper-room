@@ -50,6 +50,8 @@ export async function createSession(studyId, title, passageRef, questions) {
         dateTime:    "",
         facilitator: "",
         bigIdea:     "",
+        reflectionTitle: "The Reflection",
+        reflectionBody:  "",
         createdAt:   serverTimestamp(),
         updatedAt:   serverTimestamp(),
     });
@@ -59,7 +61,7 @@ export async function createSession(studyId, title, passageRef, questions) {
 /**
  * Updates the editable fields of a session (scripture, questions, notes, completion).
  */
-export async function updateSession(studyId, sessionId, { title, passageRef, questions, leaderNotes, completed, dateTime, facilitator, bigIdea, passageText }) {
+export async function updateSession(studyId, sessionId, { title, passageRef, questions, leaderNotes, completed, dateTime, facilitator, bigIdea, passageText, reflectionTitle, reflectionBody }) {
     const updateData = {
         title:              title || passageRef || "Session",
         "passage.reference": passageRef || "",
@@ -69,6 +71,8 @@ export async function updateSession(studyId, sessionId, { title, passageRef, que
         dateTime:           dateTime || "",
         facilitator:        facilitator || "",
         bigIdea:            bigIdea || "",
+        reflectionTitle:    reflectionTitle || "The Reflection",
+        reflectionBody:     reflectionBody || "",
         updatedAt: serverTimestamp(),
     };
     if (completed !== undefined) {
