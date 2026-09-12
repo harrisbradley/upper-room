@@ -144,6 +144,15 @@
               <textarea id="edit-reflection-body" rows="6" placeholder="Write a 2 or 3 paragraph reflection focusing on vulnerability or a practical tension..."></textarea>
             </div>
 
+            <div class="section-title mt-24" style="border-top:1px solid var(--border); padding-top:16px;">Oratio</div>
+            <p class="text-muted mt-4" style="font-size:.85rem;line-height:1.4;margin-bottom:12px;">
+              <strong>Organizer Tip:</strong> Write a short guided prayer or a single, focused prompt. Focus on giving fathers permission to speak candidly to God about their struggles, hopes, and anxieties.
+            </p>
+            <div class="form-group">
+              <label for="edit-prayer-prompt">Guided Prayer / Prompt <span class="text-muted">(optional)</span></label>
+              <textarea id="edit-prayer-prompt" rows="3" placeholder="e.g., Lord, give me the strength to lay down my pride and show up for my family today..."></textarea>
+            </div>
+
             <div class="section-title mt-24" style="border-top:1px solid var(--border); padding-top:16px;">Discussion Questions</div>
 
             <div class="form-group">
@@ -196,6 +205,32 @@
           </div>
           <p class="text-muted mt-4" style="font-size:.8rem;line-height:1.4;">Read the reflection slowly. Write down where this truth hits home in your current season of fatherhood.</p>
           <textarea id="hits-home-input" rows="4" class="mt-12" placeholder="Capture your raw, private thoughts here..." style="width:100%; box-sizing:border-box;"></textarea>
+        </div>
+      </div>
+
+      <!-- Oratio (Speak) -->
+      <div id="oratio-card" class="card mt-16">
+        <div class="section-title" style="font-size: 1.6rem;">Oratio</div>
+
+        <!-- Helper / Educational Card -->
+        <div id="oratio-info-card" class="msg msg-info mt-12" style="position: relative; padding-right: 32px;">
+          <strong>What is Oratio?</strong> Oratio is the practice of prayer. We turn our quiet reflections into a raw, honest conversation with God about our actual, messy lives.
+          <button type="button" id="close-oratio-info" style="position: absolute; right: 10px; top: 10px; background: none; border: none; font-size: 1.2rem; cursor: pointer; color: var(--text-muted);">&times;</button>
+        </div>
+
+        <div class="mt-16">
+          <h3 style="font-family: Georgia, Cambria, 'Times New Roman', Times, serif; font-size: 1.35rem; font-weight: 700; color: var(--primary); margin-bottom: 12px;">Oratio: Speak</h3>
+          <blockquote id="prayer-prompt-display" style="font-family: Georgia, Cambria, 'Times New Roman', Times, serif; font-style: italic; font-size: 1.1rem; line-height: 1.6; text-align: center; margin: 24px auto; max-width: 90%; color: var(--primary); background: var(--bg); padding: 20px; border-radius: var(--radius); border-left: 4px solid var(--accent);"></blockquote>
+        </div>
+
+        <!-- My Private Response (Participant Private Input) -->
+        <div class="mt-20" style="border-top:1px solid var(--border); padding-top:16px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <strong style="font-size:.85rem;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);">My Private Response <span style="font-size: 0.9rem;">🔒</span></strong>
+            <span id="private-prayer-status" class="text-muted hidden" style="font-size:0.75rem;">Saved</span>
+          </div>
+          <p class="text-muted mt-4" style="font-size:.8rem;line-height:1.4;">Strictly private. Write down your raw, private prayer to God. No one else can see this.</p>
+          <textarea id="private-prayer-input" rows="4" class="mt-12" placeholder="Write your private thoughts, requests, or confessions here..." style="width:100%; box-sizing:border-box;"></textarea>
         </div>
       </div>
 
@@ -268,7 +303,7 @@
 </main>
 
 <!-- App scripts -->
-<script type="module" src="js/app.js?v=18"></script>
+<script type="module" src="js/app.js?v=19"></script>
 <script type="module">initSession();</script>
 
 </body>

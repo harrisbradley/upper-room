@@ -52,6 +52,7 @@ export async function createSession(studyId, title, passageRef, questions) {
         bigIdea:     "",
         reflectionTitle: "The Reflection",
         reflectionBody:  "",
+        prayerPrompt:    "",
         createdAt:   serverTimestamp(),
         updatedAt:   serverTimestamp(),
     });
@@ -61,7 +62,7 @@ export async function createSession(studyId, title, passageRef, questions) {
 /**
  * Updates the editable fields of a session (scripture, questions, notes, completion).
  */
-export async function updateSession(studyId, sessionId, { title, passageRef, questions, leaderNotes, completed, dateTime, facilitator, bigIdea, passageText, reflectionTitle, reflectionBody }) {
+export async function updateSession(studyId, sessionId, { title, passageRef, questions, leaderNotes, completed, dateTime, facilitator, bigIdea, passageText, reflectionTitle, reflectionBody, prayerPrompt }) {
     const updateData = {
         title:              title || passageRef || "Session",
         "passage.reference": passageRef || "",
@@ -73,6 +74,7 @@ export async function updateSession(studyId, sessionId, { title, passageRef, que
         bigIdea:            bigIdea || "",
         reflectionTitle:    reflectionTitle || "The Reflection",
         reflectionBody:     reflectionBody || "",
+        prayerPrompt:       prayerPrompt || "",
         updatedAt: serverTimestamp(),
     };
     if (completed !== undefined) {

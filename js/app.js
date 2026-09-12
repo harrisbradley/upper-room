@@ -737,6 +737,16 @@ async function initSession() {
     const editReflectionTitle = qs("#edit-reflection-title");
     const editReflectionBody  = qs("#edit-reflection-body");
 
+    // Oratio section
+    const oratioCard = qs("#oratio-card");
+    const prayerPromptDisplay = qs("#prayer-prompt-display");
+    const privatePrayerInput = qs("#private-prayer-input");
+    const privatePrayerStatus = qs("#private-prayer-status");
+    const oratioInfoCard = qs("#oratio-info-card");
+    const closeOratioInfo = qs("#close-oratio-info");
+
+    const editPrayerPrompt = qs("#edit-prayer-prompt");
+
     // Session Header section
     const sessionHeaderSec= qs("#session-header-section");
     const sessionDatetime = qs("#session-datetime");
@@ -782,6 +792,7 @@ async function initSession() {
     let isLeader    = false;
     let session     = null;
     let lastSavedNotes = "";
+    let lastSavedPrayer = "";
 
     try {
         currentUser = await ensureAnonymousAuth();
@@ -939,6 +950,7 @@ async function initSession() {
         if (editCompleted) editCompleted.checked = !!session.completed;
         if (editReflectionTitle) editReflectionTitle.value = session.reflectionTitle || "";
         if (editReflectionBody)  editReflectionBody.value  = session.reflectionBody || "";
+        if (editPrayerPrompt)    editPrayerPrompt.value    = session.prayerPrompt || "";
 
         // Render Meditatio (Reflection)
         const refTitle = session.reflectionTitle || "The Reflection";
@@ -958,6 +970,20 @@ async function initSession() {
                 }
             } else {
                 hide(meditatioCard);
+            }
+        }
+
+        // Render Oratio (Prayer)
+        const prPrompt = session.prayerPrompt || "Take a moment of silence. Turn your heart toward God and speak to Him honestly about what you have read today.";
+        if (oratioCard) {
+            show(oratioCard);
+            if (prayerPromptDisplay) prayerPromptDisplay.textContent = prPrompt;
+            
+            // Load participant's privatePrayer
+            const savedPrayer = (participantData && participantData.privatePrayer) ? participantData.privatePrayer : "";
+            if (privatePrayerInput) {
+                privatePrayerInput.value = savedPrayer;
+                lastSavedPrayer = savedPrayer;
             }
         }
 
@@ -1021,6 +1047,7 @@ async function initSession() {
             if (recapViewSec) hide(recapViewSec);
             if (recapFormSec) hide(recapFormSec);
             if (meditatioCard) hide(meditatioCard);
+            if (oratioCard) hide(oratioCard);
             
             // Set title to "Edit Session"
             if (sessionTitleEl) sessionTitleEl.textContent = "Edit Session";
@@ -1056,6 +1083,7 @@ async function initSession() {
             // New Meditatio fields
             const reflectionTitle = editReflectionTitle ? editReflectionTitle.value.trim() : "";
             const reflectionBody  = editReflectionBody ? editReflectionBody.value.trim() : "";
+            const prayerPrompt    = editPrayerPrompt ? editPrayerPrompt.value.trim() : "";
             
             if (!passage) { setError(editMsg, "Please enter a scripture passage."); return; }
             if (passage.length > 100) { setError(editMsg, "Passage reference cannot be longer than 100 characters."); return; }
@@ -1075,7 +1103,8 @@ async function initSession() {
                     bigIdea,
                     passageText,
                     reflectionTitle,
-                    reflectionBody
+                    reflectionBody,
+                    prayerPrompt
                 });
                 session = await getSession(studyId, sessionId);
                 
@@ -1201,6 +1230,72 @@ async function initSession() {
         closeMeditatioInfo.addEventListener("click", () => {
             hide(meditatioInfoCard);
             localStorage.setItem("meditatio-info-dismissed", "true");
+        });
+    }
+
+    // Participant: Oratio private notes autosave
+    if (privatePrayerInput) {
+        let debounceTimerOratio;
+
+        const savePrayer = async () => {
+            const val = privatePrayerInput.value;
+            if (val === lastSavedPrayer) return; // No change, don't save
+            
+            if (privatePrayerStatus) {
+                privatePrayerStatus.textContent = "Saving…";
+                privatePrayerStatus.style.color = "var(--accent)";
+                privatePrayerStatus.style.fontWeight = "600";
+                show(privatePrayerStatus);
+            }
+            try {
+                await updateParticipantData(studyId, sessionId, currentUser.uid, { privatePrayer: val });
+                participantData = { ...participantData, privatePrayer: val };
+                lastSavedPrayer = val;
+                if (privatePrayerStatus) {
+                    privatePrayerStatus.textContent = "Saved";
+                    privatePrayerStatus.style.color = "var(--success)";
+                    privatePrayerStatus.style.fontWeight = "600";
+                    setTimeout(() => {
+                        if (privatePrayerStatus.textContent === "Saved") {
+                            hide(privatePrayerStatus);
+                        }
+                    }, 2000);
+                }
+            } catch (err) {
+                console.error("Autosave failed:", err);
+                if (privatePrayerStatus) {
+                    privatePrayerStatus.textContent = "Error saving";
+                    privatePrayerStatus.style.color = "var(--error)";
+                    privatePrayerStatus.style.fontWeight = "600";
+                }
+            }
+        };
+
+        privatePrayerInput.addEventListener("input", () => {
+            if (privatePrayerStatus) {
+                privatePrayerStatus.textContent = "Saving…";
+                privatePrayerStatus.style.color = "var(--accent)";
+                privatePrayerStatus.style.fontWeight = "600";
+                show(privatePrayerStatus);
+            }
+            clearTimeout(debounceTimerOratio);
+            debounceTimerOratio = setTimeout(savePrayer, 1000);
+        });
+
+        privatePrayerInput.addEventListener("blur", () => {
+            clearTimeout(debounceTimerOratio);
+            savePrayer();
+        });
+    }
+
+    // Oratio Info Card dismissal
+    if (closeOratioInfo && oratioInfoCard) {
+        if (localStorage.getItem("oratio-info-dismissed") === "true") {
+            hide(oratioInfoCard);
+        }
+        closeOratioInfo.addEventListener("click", () => {
+            hide(oratioInfoCard);
+            localStorage.setItem("oratio-info-dismissed", "true");
         });
     }
 
