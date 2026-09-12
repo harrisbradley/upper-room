@@ -725,6 +725,10 @@ async function initSession() {
     const lectioViewSec = qs("#lectio-view-section");
     const questionsSec  = qs("#questions-section");
 
+    // Lectio info card
+    const lectioInfoCard    = qs("#lectio-info-card");
+    const closeLectioInfo   = qs("#close-lectio-info");
+
     // Meditatio section
     const meditatioCard = qs("#meditatio-card");
     const reflectionDisplayTitle = qs("#reflection-display-title");
@@ -1219,6 +1223,17 @@ async function initSession() {
         hitsHomeInput.addEventListener("blur", () => {
             clearTimeout(debounceTimer);
             saveNotes();
+        });
+    }
+
+    // Lectio Info Card dismissal
+    if (closeLectioInfo && lectioInfoCard) {
+        if (localStorage.getItem("lectio-info-dismissed") === "true") {
+            hide(lectioInfoCard);
+        }
+        closeLectioInfo.addEventListener("click", () => {
+            hide(lectioInfoCard);
+            localStorage.setItem("lectio-info-dismissed", "true");
         });
     }
 

@@ -61,9 +61,14 @@
       <div class="card">
         <div id="lectio-view-section">
           <div class="section-title" style="font-size: 1.6rem;">Lectio</div>
-          <p class="text-muted mt-4" style="font-size:.85rem;line-height:1.4;margin-bottom:12px;">Lectio is the practice of slow, meditative listening. Instead of skimming scripture for facts or studying it for a test, we quiet our minds to notice the single word or phrase that captures our attention today.</p>
+
+          <!-- Helper / Educational Card -->
+          <div id="lectio-info-card" class="msg msg-info mt-12" style="position: relative; padding-right: 32px;">
+            <strong>What is Lectio?</strong> Lectio is the practice of slow, meditative listening. Instead of skimming scripture for facts or studying it for a test, we quiet our minds to notice the single word or phrase that captures our attention today.
+            <button type="button" id="close-lectio-info" style="position: absolute; right: 10px; top: 10px; background: none; border: none; font-size: 1.2rem; cursor: pointer; color: var(--text-muted);">&times;</button>
+          </div>
           
-          <div class="mt-12">
+          <div class="mt-16">
             <strong style="font-size:.85rem;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);">Scripture Focus</strong>
             <div class="scripture-block mt-6">
               <div id="passage-ref" class="scripture-ref">—</div>
@@ -303,7 +308,7 @@
 </main>
 
 <!-- App scripts -->
-<script type="module" src="js/app.js?v=19"></script>
+<script type="module" src="js/app.js?v=20"></script>
 <script type="module">initSession();</script>
 
 </body>
